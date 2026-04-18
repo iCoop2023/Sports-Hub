@@ -6,7 +6,7 @@ accept an `Authorization: Bearer ...` header, which keeps non-browser
 clients (iOS app, curl) working during the transition.
 """
 
-from fastapi import APIRouter, HTTPException, Header, Cookie, Response
+from fastapi import APIRouter, HTTPException, Header, Cookie, Response, Request
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 import os
@@ -20,6 +20,22 @@ except Exception:
         SUPABASE_ENABLED = True
     except Exception:
         SUPABASE_ENABLED = False
+
+# Rate limiter — imported here so the /login decorator can reference it.
+# If slowapi isn't installed (e.g. early dev), fall back to a no-op decorator
+# so auth still boots.
+try:
+    try:
+        from .rate_limit import limiter
+    except Exception:
+        from rate_limit import limiter
+except Exception:
+    class _NoLimiter:
+        def limit(self, *_args, **_kwargs):
+            def deco(fn):
+                return fn
+            return deco
+    limiter = _NoLimiter()
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -84,22 +100,27 @@ class SessionResponse(BaseModel):
 
 
 @router.post("/login")
-async def send_magic_link(request: LoginRequest):
-    """Send magic link to user's email."""
+@limiter.limit("5/minute;20/hour")
+async def send_magic_link(request: Request, body: LoginRequest):
+    """Send magic link to user's email.
+
+    Rate-limited per IP: 5 per minute / 20 per hour. Prevents an attacker
+    from spamming magic links to arbitrary email addresses.
+    """
     if not SUPABASE_ENABLED:
         raise HTTPException(status_code=503, detail="Auth not configured")
 
     try:
         supabase = get_supabase_client()
         supabase.auth.sign_in_with_otp({
-            "email": request.email,
+            "email": body.email,
             "options": {
                 "email_redirect_to": os.getenv("APP_URL", "https://sports-hub-sepia.vercel.app")
             }
         })
         return {
             "status": "success",
-            "message": f"Magic link sent to {request.email}. Check your inbox!"
+            "message": f"Magic link sent to {body.email}. Check your inbox!"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send magic link: {str(e)}")

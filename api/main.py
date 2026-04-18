@@ -97,6 +97,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Rate limiter — wired here so slowapi can intercept excesses app-wide.
+try:
+    from slowapi.errors import RateLimitExceeded
+    from slowapi import _rate_limit_exceeded_handler
+    try:
+        from .rate_limit import limiter
+    except Exception:
+        from rate_limit import limiter
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+except Exception as e:
+    print(f"Rate limiter not configured: {e}")
+
 # CORS — restrict to the frontend origins we actually serve.
 # Override via CORS_ALLOWED_ORIGINS env var: comma-separated list of origins.
 # The previous "*" + allow_credentials=True combination was unsafe (and is
