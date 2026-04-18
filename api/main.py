@@ -4,7 +4,7 @@ Sports Hub API Server
 FastAPI backend for iOS app
 """
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Cookie
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pathlib import Path
@@ -35,12 +35,18 @@ except:
     get_news_sources_for_team = None
 
 try:
-    from .auth import router as auth_router
+    from .auth import router as auth_router, resolve_token
 except Exception:
     try:
-        from auth import router as auth_router
+        from auth import router as auth_router, resolve_token
     except Exception:
         auth_router = None
+        def resolve_token(cookie_token, authorization):
+            if cookie_token:
+                return cookie_token
+            if authorization and authorization.startswith("Bearer "):
+                return authorization[len("Bearer "):]
+            return None
 
 # Models
 class NewsArticle(BaseModel):
@@ -277,10 +283,13 @@ async def root():
 
 
 @app.get("/api/settings")
-async def get_user_settings(authorization: Optional[str] = Header(None)):
+async def get_user_settings(
+    sh_access_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = Header(None),
+):
     """Return the persisted UI settings (from Supabase if logged in)."""
-    if SUPABASE_ENABLED and authorization and authorization.startswith("Bearer "):
-        token = authorization.replace("Bearer ", "")
+    token = resolve_token(sh_access_token, authorization)
+    if SUPABASE_ENABLED and token:
         try:
             supabase = get_supabase_client()
             user_response = supabase.auth.get_user(token)
@@ -304,12 +313,16 @@ async def get_user_settings(authorization: Optional[str] = Header(None)):
 
 
 @app.post("/api/settings")
-async def update_user_settings(settings: UserSettings, authorization: Optional[str] = Header(None)):
+async def update_user_settings(
+    settings: UserSettings,
+    sh_access_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = Header(None),
+):
     """Persist settings (to Supabase if logged in, else local file)."""
     payload = settings.dict()
-    
-    if SUPABASE_ENABLED and authorization and authorization.startswith("Bearer "):
-        token = authorization.replace("Bearer ", "")
+
+    token = resolve_token(sh_access_token, authorization)
+    if SUPABASE_ENABLED and token:
         try:
             supabase = get_supabase_client()
             user_response = supabase.auth.get_user(token)

@@ -481,8 +481,9 @@
         ];
 
         async function fetchServerSettings() {
-            const headers = (typeof auth !== 'undefined') ? auth.getAuthHeaders() : {};
-            const response = await fetch(`${API_BASE}/api/settings`, { headers });
+            const response = await fetch(`${API_BASE}/api/settings`, {
+                credentials: 'include'
+            });
             if (!response.ok) {
                 return null;
             }
@@ -682,16 +683,10 @@
 
             // Try to sync to server in background
             try {
-                const authHeaders = (typeof auth !== 'undefined') ? auth.getAuthHeaders() : {};
-                console.log('Auth headers:', authHeaders);
-                const headers = {
-                    'Content-Type': 'application/json',
-                    ...authHeaders
-                };
-                
                 const response = await fetch(`${API_BASE}/api/settings`, {
                     method: 'POST',
-                    headers: headers,
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settings)
                 });
 

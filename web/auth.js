@@ -1,28 +1,28 @@
-// Auth helper for Sports Hub
+// Auth helper for Sports Hub.
+//
+// Session tokens live in httpOnly cookies set by the API, so JS can't read
+// or exfiltrate them. This file only caches non-sensitive user info
+// (id, email) in localStorage for rendering the signed-in UI.
 const API_BASE_URL = window.API_BASE || 'https://sports-hub-sepia.vercel.app';
 
 class AuthManager {
     constructor() {
-        this.token = localStorage.getItem('auth_token');
         this.user = JSON.parse(localStorage.getItem('auth_user') || 'null');
     }
 
     isLoggedIn() {
-        return !!this.token;
+        return !!this.user;
     }
 
     getUser() {
         return this.user;
     }
 
-    getToken() {
-        return this.token;
-    }
-
     async sendMagicLink(email) {
         const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email })
         });
 
@@ -33,39 +33,28 @@ class AuthManager {
         return await response.json();
     }
 
-    setSession(token, user) {
-        this.token = token;
+    setUser(user) {
         this.user = user;
-        localStorage.setItem('auth_token', token);
         localStorage.setItem('auth_user', JSON.stringify(user));
     }
 
-    clearSession() {
-        this.token = null;
+    clearUser() {
         this.user = null;
-        localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
+        // Legacy cleanup — older builds stored a token here.
+        localStorage.removeItem('auth_token');
     }
 
     async logout() {
-        if (this.token) {
-            try {
-                await fetch(`${API_BASE_URL}/api/auth/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${this.token}` }
-                });
-            } catch (e) {
-                console.error('Logout failed:', e);
-            }
+        try {
+            await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (e) {
+            console.error('Logout failed:', e);
         }
-        this.clearSession();
-    }
-
-    getAuthHeaders() {
-        if (this.token) {
-            return { 'Authorization': `Bearer ${this.token}` };
-        }
-        return {};
+        this.clearUser();
     }
 }
 
