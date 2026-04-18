@@ -609,7 +609,8 @@
         }
 
         function getLeagueClass(league) {
-            return league.toLowerCase().replace(' ', '');
+            if (!league) return 'unknown';
+            return String(league).toLowerCase().replace(/\s+/g, '');
         }
 
         function renderStandingsBar(team) {

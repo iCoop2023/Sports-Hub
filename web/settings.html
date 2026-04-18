@@ -527,18 +527,22 @@
 
         function renderTeams(teams) {
             const teamList = document.getElementById('teamList');
-            teamList.innerHTML = teams.map((team, idx) => `
+            teamList.innerHTML = teams.map((team, idx) => {
+                const league = team.league || '';
+                const leagueSlug = league.toLowerCase().replace(/\s+/g, '') || 'unknown';
+                return `
                 <div class="team-item" draggable="true" data-idx="${idx}">
                     <span class="drag-handle">☰</span>
                     <div class="team-info">
                         <div class="team-name">
-                            ${team.name}
-                            <span class="league-badge badge-${team.league.toLowerCase().replace(' ', '')}">${team.league}</span>
+                            ${team.name || ''}
+                            <span class="league-badge badge-${leagueSlug}">${league}</span>
                         </div>
                     </div>
                     <button class="remove-btn" onclick="removeTeam(${idx})">Remove</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
             
             // Add drag and drop handlers
             setupDragAndDrop();
