@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Settings - Sports Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            background: linear-gradient(180deg, #1a1c1e 0%, #0a0c0e 100%);
+            padding: 50px 20px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #38383a;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: #0a84ff;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: #1c1c1e;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 20px;
+            border-bottom: 1px solid #38383a;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .section-subtitle {
+            color: #98989d;
+            font-size: 0.9rem;
+        }
+
+        .setting-row {
+            padding: 15px 20px;
+            border-bottom: 1px solid #38383a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            flex: 1;
+        }
+
+        .setting-name {
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+
+        .setting-desc {
+            color: #98989d;
+            font-size: 0.85rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 51px;
+            height: 31px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #39393d;
+            transition: .3s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 27px;
+            width: 27px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #30d158;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .team-list {
+            padding: 10px 0;
+        }
+
+        .team-item {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #38383a;
+            cursor: move;
+            transition: background 0.2s;
+        }
+
+        .team-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .team-item.dragging {
+            opacity: 0.5;
+        }
+
+        .drag-handle {
+            font-size: 1.2rem;
+            color: #98989d;
+            margin-right: 10px;
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .team-item:last-child {
+            border-bottom: none;
+        }
+
+        .team-info {
+            flex: 1;
+        }
+
+        .team-name {
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+
+        .team-league {
+            color: #98989d;
+            font-size: 0.85rem;
+        }
+
+        .remove-btn {
+            background: #ff453a;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .add-team-btn {
+            width: 100%;
+            background: #0a84ff;
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .save-btn {
+            width: 100%;
+            background: #30d158;
+            border: none;
+            color: #000;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .save-btn:active {
+            transform: scale(0.98);
+        }
+
+        .league-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-nhl { background: rgba(0, 94, 184, 0.2); color: #005eb8; }
+        .badge-mlb { background: rgba(191, 13, 62, 0.2); color: #bf0d3e; }
+        .badge-nfl { background: rgba(213, 10, 10, 0.2); color: #d50a0a; }
+        .badge-nba { background: rgba(253, 93, 0, 0.2); color: #fd5d00; }
+        .badge-whl { background: rgba(255, 202, 40, 0.2); color: #ffca28; }
+
+        /* Hide news sources section */
+        #newsSources {
+            display: none;
+        }
+        
+        .success-message {
+            background: #30d158;
+            color: #000;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message {
+            background: #ff453a;
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <script src="add-team-universal.js"></script>
+    <script src="quick-fix-news.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <button class="back-btn" onclick="window.location.href='/'">←</button>
+            <h1>Settings</h1>
+        </div>
+    </div>
+
+    <div class="container" id="container">
+        <!-- Success message (shown after save) -->
+        <div id="successMessage" style="display: none;" class="success-message">
+            ✓ Settings saved successfully!
+        </div>
+        <div id="errorMessage" style="display: none;" class="error-message">
+            ⚠️ Failed to save. Please try again.
+        </div>
+
+        <!-- News sources auto-selected per team - section removed for simplicity -->
+            <div id="newsSources">
+                <!-- Canadian Sources -->
+                <div class="setting-row" style="background: rgba(0, 94, 184, 0.1);">
+                    <div class="setting-label">
+                        <div class="setting-name">🍁 Canadian Sources</div>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">TSN</div>
+                        <div class="setting-desc">tsn.ca</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-tsn" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">Sportsnet</div>
+                        <div class="setting-desc">sportsnet.ca</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-sportsnet" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">CBC Sports</div>
+                        <div class="setting-desc">cbc.ca/sports</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-cbc">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <!-- US Sources -->
+                <div class="setting-row" style="background: rgba(213, 10, 10, 0.1); margin-top: 10px;">
+                    <div class="setting-label">
+                        <div class="setting-name">🇺🇸 US Sources</div>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">ESPN</div>
+                        <div class="setting-desc">espn.com</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-espn" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">League Sites</div>
+                        <div class="setting-desc">NHL, MLB, NBA, NFL official sites</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-leagues" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">The Athletic</div>
+                        <div class="setting-desc">theathletic.com</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-athletic">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <!-- International Sources -->
+                <div class="setting-row" style="background: rgba(255, 107, 53, 0.1); margin-top: 10px;">
+                    <div class="setting-label">
+                        <div class="setting-name">🌍 International</div>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">BBC Sport</div>
+                        <div class="setting-desc">bbc.com/sport</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-bbc" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <div class="setting-name">Marca</div>
+                        <div class="setting-desc">marca.com (La Liga)</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="source-marca" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Teams Section -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">My Teams</div>
+                <div class="section-subtitle">Add or remove teams from your dashboard</div>
+            </div>
+            <div class="team-list" id="teamList">
+                <!-- Teams will be loaded here -->
+            </div>
+            <button class="add-team-btn" onclick="window.location.href='league-picker.html'">+ Add Team</button>
+        </div>
+
+        <!-- Display Preferences -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Display</div>
+                <div class="section-subtitle">Customize how content is displayed</div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-name">News Articles Per Team</div>
+                    <div class="setting-desc">Currently: 5</div>
+                </div>
+                <select id="newsCount" style="background: #39393d; border: none; color: white; padding: 8px 12px; border-radius: 8px;">
+                    <option value="3">3</option>
+                    <option value="5" selected>5</option>
+                    <option value="7">7</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-name">Theme</div>
+                    <div class="setting-desc">Coming soon</div>
+                </div>
+                <select disabled style="background: #39393d; border: none; color: #666; padding: 8px 12px; border-radius: 8px;">
+                    <option>Dark</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Auto-save enabled - button hidden -->
+        <!-- <button class="save-btn" onclick="saveSettings()">Save Settings</button> -->
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="team-database.js"></script>
+    <script>
+        const API_BASE = 'https://sports-hub-sepia.vercel.app';
+
+        const DEFAULT_TEAMS = [
+            { name: "Edmonton Oilers", league: "NHL" },
+            { name: "Pittsburgh Penguins", league: "NHL" },
+            { name: "Toronto Blue Jays", league: "MLB" },
+            { name: "Kansas City Chiefs", league: "NFL" },
+            { name: "Toronto Raptors", league: "NBA" },
+            { name: "Real Madrid", league: "La Liga" }
+        ];
+
+        async function fetchServerSettings() {
+            const headers = (typeof auth !== 'undefined') ? auth.getAuthHeaders() : {};
+            const response = await fetch(`${API_BASE}/api/settings`, { headers });
+            if (!response.ok) {
+                return null;
+            }
+            return response.json();
+        }
+
+        async function loadSettings() {
+            let settings = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+            const isDirty = localStorage.getItem('sportsHubSettingsDirty') === 'true';
+            if (!isDirty) {
+                try {
+                    const serverSettings = await fetchServerSettings();
+                    if (serverSettings) {
+                        settings = serverSettings;
+                        localStorage.setItem('sportsHubSettings', JSON.stringify(settings));
+                    }
+                } catch (err) {
+                    console.warn('Failed to sync settings with server', err);
+                }
+            }
+
+            applySettings(settings);
+        }
+
+        function applySettings(settings = {}) {
+            const sources = settings.newsSources || {};
+            Object.keys(sources).forEach(sourceId => {
+                const toggle = document.getElementById(`source-${sourceId}`);
+                if (toggle) {
+                    toggle.checked = sources[sourceId];
+                }
+            });
+
+            if (settings.newsCount) {
+                document.getElementById('newsCount').value = settings.newsCount;
+            }
+
+            const teams = settings.teams || DEFAULT_TEAMS;
+            renderTeams(teams);
+        }
+
+        function renderTeams(teams) {
+            const teamList = document.getElementById('teamList');
+            teamList.innerHTML = teams.map((team, idx) => `
+                <div class="team-item" draggable="true" data-idx="${idx}">
+                    <span class="drag-handle">☰</span>
+                    <div class="team-info">
+                        <div class="team-name">
+                            ${team.name}
+                            <span class="league-badge badge-${team.league.toLowerCase().replace(' ', '')}">${team.league}</span>
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick="removeTeam(${idx})">Remove</button>
+                </div>
+            `).join('');
+            
+            // Add drag and drop handlers
+            setupDragAndDrop();
+        }
+
+        let draggedElement = null;
+
+        function setupDragAndDrop() {
+            const items = document.querySelectorAll('.team-item');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', e => {
+                    draggedElement = item;
+                    item.classList.add('dragging');
+                });
+                
+                item.addEventListener('dragend', e => {
+                    item.classList.remove('dragging');
+                    draggedElement = null;
+                });
+                
+                item.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(e.clientY);
+                    const teamList = document.getElementById('teamList');
+                    
+                    if (afterElement == null) {
+                        teamList.appendChild(draggedElement);
+                    } else {
+                        teamList.insertBefore(draggedElement, afterElement);
+                    }
+                });
+                
+                item.addEventListener('drop', e => {
+                    e.preventDefault();
+                    updateTeamOrder();
+                });
+            });
+        }
+
+        function getDragAfterElement(y) {
+            const items = [...document.querySelectorAll('.team-item:not(.dragging)')];
+            
+            return items.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateTeamOrder() {
+            const items = document.querySelectorAll('.team-item');
+            const settings = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+            const teams = [];
+            
+            items.forEach(item => {
+                const idx = parseInt(item.dataset.idx);
+                const currentTeams = settings.teams || DEFAULT_TEAMS;
+                if (currentTeams[idx]) {
+                    teams.push(currentTeams[idx]);
+                }
+            });
+            
+            settings.teams = teams;
+            localStorage.setItem('sportsHubSettings', JSON.stringify(settings));
+            markDirty();
+            renderTeams(teams);
+        }
+
+        function removeTeam(idx) {
+            const settings = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+            const teams = settings.teams || DEFAULT_TEAMS;
+            teams.splice(idx, 1);
+            settings.teams = teams;
+            localStorage.setItem('sportsHubSettings', JSON.stringify(settings));
+            markDirty();
+            renderTeams(teams);
+        }
+
+        function addTeam() {
+            const searchQuery = prompt('Enter ANY team name:\n\nExamples:\n- Calgary\n- Yankees\n- Barcelona\n- Liverpool');
+            if (!searchQuery) return;
+
+            const results = searchTeams(searchQuery);
+            
+            if (results.length === 0) {
+                alert('Adding as custom team...');
+                return;
+            }
+            
+            let message = 'Select a team:\n\n';
+            results.slice(0, 10).forEach((team, idx) => {
+                message += `${idx + 1}. ${team.name} (${team.league})\n`;
+            });
+            message += '\nEnter number (1-' + Math.min(results.length, 10) + '):';
+            
+            const choice = prompt(message);
+            if (!choice) return;
+            
+            const idx = parseInt(choice) - 1;
+            if (idx < 0 || idx >= results.length) {
+                alert('Invalid selection');
+                return;
+            }
+            
+            const selectedTeam = results[idx];
+            const settings = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+            const teams = settings.teams || DEFAULT_TEAMS;
+            
+            // Check if team already exists
+            if (teams.some(t => t.name === selectedTeam.name)) {
+                alert(selectedTeam.name + ' is already in your list!');
+                return;
+            }
+            
+            teams.push(selectedTeam);
+            settings.teams = teams;
+            localStorage.setItem('sportsHubSettings', JSON.stringify(settings));
+            markDirty();
+            renderTeams(teams);
+            
+            alert('✓ ' + selectedTeam.name + ' added to your teams!');
+        }
+
+        async function saveSettings() {
+            hideMessages();
+            const stored = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+            const settings = {
+                teams: stored.teams || DEFAULT_TEAMS
+            };
+
+            localStorage.setItem('sportsHubSettings', JSON.stringify(settings));
+            localStorage.removeItem('sportsHubSettingsDirty');
+
+            // Show success immediately for local save
+            showSuccess('✓ Settings auto-saved');
+
+            // Try to sync to server in background
+            try {
+                const authHeaders = (typeof auth !== 'undefined') ? auth.getAuthHeaders() : {};
+                console.log('Auth headers:', authHeaders);
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                };
+                
+                const response = await fetch(`${API_BASE}/api/settings`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(settings)
+                });
+
+                if (response.ok) {
+                    console.log('✓ Settings synced to server');
+                } else {
+                    const errorText = await response.text();
+                    console.warn('Server sync failed:', response.status, errorText);
+                }
+            } catch (err) {
+                console.warn('Background sync failed:', err);
+            }
+        }
+
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = `⚠️ ${message}`;
+            errorMsg.style.display = 'block';
+        }
+
+        function hideMessages() {
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function markDirty() {
+            localStorage.setItem('sportsHubSettingsDirty', 'true');
+        }
+
+        // Auto-save with debounce
+        let autoSaveTimer = null;
+        function autoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                saveSettings();
+            }, 1000); // Wait 1 second after last change
+        }
+
+        // Attach auto-save to all inputs
+        function setupAutoSave() {
+            // News source checkboxes
+            document.querySelectorAll('.source-toggle input').forEach(input => {
+                input.addEventListener('change', autoSave);
+            });
+            
+            // News count slider
+            const newsCount = document.getElementById('newsCount');
+            if (newsCount) {
+                newsCount.addEventListener('input', autoSave);
+            }
+        }
+
+        // Load settings on page load
+        loadSettings();
+        setupAutoSave();
+    </script>
+</body>
+</html>

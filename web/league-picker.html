@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Team - Sports Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            background: linear-gradient(180deg, #1a1c1e 0%, #0a0c0e 100%);
+            padding: 50px 20px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #38383a;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: #0a84ff;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .sport-category {
+            margin-bottom: 30px;
+        }
+
+        .category-header {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #58a6ff;
+        }
+
+        .league-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .league-card {
+            background: #1c1c1e;
+            border: 2px solid #38383a;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .league-card:hover {
+            border-color: #0a84ff;
+            background: #252527;
+            transform: translateY(-2px);
+        }
+
+        .league-card:active {
+            transform: scale(0.98);
+        }
+
+        .league-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .league-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .league-desc {
+            font-size: 0.8rem;
+            color: #98989d;
+        }
+
+        .team-list {
+            display: none;
+        }
+
+        .team-list.active {
+            display: block;
+        }
+
+        .team-item {
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .team-item:hover {
+            border-color: #0a84ff;
+            background: #252527;
+        }
+
+        .team-item:active {
+            transform: scale(0.98);
+        }
+
+        .team-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .search-box {
+            width: 100%;
+            background: #1c1c1e;
+            border: 2px solid #38383a;
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #0a84ff;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #98989d;
+            padding: 40px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <h1 id="headerTitle">Choose a League</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- League Selection View -->
+        <div id="leagueView">
+            <!-- Hockey -->
+            <div class="sport-category">
+                <div class="category-header">🏒 Hockey</div>
+                <div class="league-grid">
+                    <div class="league-card" onclick="selectLeague('NHL', 'National Hockey League')">
+                        <div class="league-icon">🏒</div>
+                        <div class="league-name">NHL</div>
+                        <div class="league-desc">32 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('WHL', 'Western Hockey League')">
+                        <div class="league-icon">🍁</div>
+                        <div class="league-name">WHL</div>
+                        <div class="league-desc">CHL - 22 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('OHL', 'Ontario Hockey League')">
+                        <div class="league-icon">🍁</div>
+                        <div class="league-name">OHL</div>
+                        <div class="league-desc">CHL - 21 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('QMJHL', 'Quebec Major Junior Hockey League')">
+                        <div class="league-icon">🍁</div>
+                        <div class="league-name">QMJHL</div>
+                        <div class="league-desc">CHL - 18 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('BCHL', 'British Columbia Hockey League')">
+                        <div class="league-icon">🏝️</div>
+                        <div class="league-name">BCHL</div>
+                        <div class="league-desc">Junior A - 18 teams</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Baseball -->
+            <div class="sport-category">
+                <div class="category-header">⚾ Baseball</div>
+                <div class="league-grid">
+                    <div class="league-card" onclick="selectLeague('MLB', 'Major League Baseball')">
+                        <div class="league-icon">⚾</div>
+                        <div class="league-name">MLB</div>
+                        <div class="league-desc">30 teams</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Football -->
+            <div class="sport-category">
+                <div class="category-header">🏈 Football</div>
+                <div class="league-grid">
+                    <div class="league-card" onclick="selectLeague('NFL', 'National Football League')">
+                        <div class="league-icon">🏈</div>
+                        <div class="league-name">NFL</div>
+                        <div class="league-desc">32 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('CFL', 'Canadian Football League')">
+                        <div class="league-icon">🍁</div>
+                        <div class="league-name">CFL</div>
+                        <div class="league-desc">9 teams</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basketball -->
+            <div class="sport-category">
+                <div class="category-header">🏀 Basketball</div>
+                <div class="league-grid">
+                    <div class="league-card" onclick="selectLeague('NBA', 'National Basketball Association')">
+                        <div class="league-icon">🏀</div>
+                        <div class="league-name">NBA</div>
+                        <div class="league-desc">30 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('CEBL', 'Canadian Elite Basketball League')">
+                        <div class="league-icon">🍁</div>
+                        <div class="league-name">CEBL</div>
+                        <div class="league-desc">10 teams</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soccer -->
+            <div class="sport-category">
+                <div class="category-header">⚽ Soccer</div>
+                <div class="league-grid">
+                    <div class="league-card" onclick="selectLeague('Premier League', 'English Premier League')">
+                        <div class="league-icon">🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+                        <div class="league-name">Premier League</div>
+                        <div class="league-desc">20 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('La Liga', 'Spanish La Liga')">
+                        <div class="league-icon">🇪🇸</div>
+                        <div class="league-name">La Liga</div>
+                        <div class="league-desc">20 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('Bundesliga', 'German Bundesliga')">
+                        <div class="league-icon">🇩🇪</div>
+                        <div class="league-name">Bundesliga</div>
+                        <div class="league-desc">18 teams</div>
+                    </div>
+                    <div class="league-card" onclick="selectLeague('MLS', 'Major League Soccer')">
+                        <div class="league-icon">⚽</div>
+                        <div class="league-name">MLS</div>
+                        <div class="league-desc">29 teams</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Selection View -->
+        <div id="teamView" class="team-list">
+            <input type="text" id="teamSearch" class="search-box" placeholder="Search teams..." onkeyup="filterTeams()">
+            <div id="teamList"></div>
+        </div>
+    </div>
+
+    <script src="team-database.js"></script>
+    <script src="team-metadata.js"></script>
+    <script src="add-team-universal.js"></script>
+    <script>
+        let currentLeague = null;
+        let currentLeagueName = null;
+
+        function goBack() {
+            const teamView = document.getElementById('teamView');
+            const leagueView = document.getElementById('leagueView');
+            
+            if (teamView.classList.contains('active')) {
+                // Go back to league selection
+                teamView.classList.remove('active');
+                leagueView.style.display = 'block';
+                document.getElementById('headerTitle').textContent = 'Choose a League';
+            } else {
+                // Go back to settings
+                window.location.href = 'settings.html';
+            }
+        }
+
+        function selectLeague(leagueCode, leagueName) {
+            currentLeague = leagueCode;
+            currentLeagueName = leagueName;
+            
+            // Hide league view
+            document.getElementById('leagueView').style.display = 'none';
+            document.getElementById('teamView').classList.add('active');
+            document.getElementById('headerTitle').textContent = leagueName;
+            
+            // Load teams for this league
+            loadTeams(leagueCode);
+        }
+
+        function loadTeams(leagueCode) {
+            const teams = getTeamsByLeague(leagueCode);
+            const teamList = document.getElementById('teamList');
+            
+            if (teams && teams.length > 0) {
+                teamList.innerHTML = teams.map(team => `
+                    <div class="team-item" onclick="addTeam('${team}', '${leagueCode}')">
+                        <div class="team-name">${team}</div>
+                    </div>
+                `).join('');
+            } else {
+                teamList.innerHTML = '<div class="no-results">No teams found for this league</div>';
+            }
+        }
+
+        function filterTeams() {
+            const search = document.getElementById('teamSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.team-item');
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(search) ? 'block' : 'none';
+            });
+        }
+
+        async function addTeam(teamName, leagueCode) {
+            const API_BASE = 'https://sports-hub-sepia.vercel.app';
+            
+            // Get current settings
+            const settings = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+            const teams = settings.teams || [];
+            
+            // Check if team already exists
+            if (teams.some(t => t.name === teamName)) {
+                alert(teamName + ' is already in your list!');
+                return;
+            }
+            
+            // Show loading state
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Adding...';
+            btn.disabled = true;
+            
+            try {
+                // Fetch team data from API (schedule + news)
+                const response = await fetch(`${API_BASE}/api/team/fetch?team_name=${encodeURIComponent(teamName)}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Cache the fetched data
+                    const teamCache = JSON.parse(localStorage.getItem('teamCache') || '{}');
+                    teamCache[teamName] = {
+                        league: result.league,
+                        games: result.games || [],
+                        news: result.news || [],
+                        fetched_at: new Date().toISOString()
+                    };
+                    localStorage.setItem('teamCache', JSON.stringify(teamCache));
+                    
+                    // Add team to settings
+                    teams.push({
+                        name: teamName,
+                        league: leagueCode
+                    });
+                    
+                    settings.teams = teams;
+                    localStorage.setItem('sportsHubSettings', JSON.stringify(settings));
+                    localStorage.setItem('sportsHubSettingsDirty', 'true');
+                    
+                    // Show success and redirect
+                    btn.textContent = `✓ Added (${result.games_found || 0} games, ${result.news_found || 0} news)`;
+                    setTimeout(() => window.location.href = '/', 1000);
+                } else {
+                    throw new Error(result.message || 'Failed to fetch team data');
+                }
+            } catch (error) {
+                console.error('Failed to add team:', error);
+                alert('Failed to add team. Please try again.');
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

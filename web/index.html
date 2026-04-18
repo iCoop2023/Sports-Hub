@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Sports Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            background: linear-gradient(180deg, #1a1c1e 0%, #0a0c0e 100%);
+            padding: 50px 20px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #38383a;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #58a6ff;
+        }
+
+        .header .subtitle {
+            color: #98989d;
+            font-size: 0.95rem;
+        }
+
+        .header-buttons {
+            position: absolute;
+            top: 55px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .refresh-btn, .settings-btn, .login-btn {
+            background: #0a84ff;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .settings-btn {
+            padding: 10px 15px;
+            font-size: 1.1rem;
+        }
+
+        .login-btn {
+            background: #30d158;
+        }
+
+        .user-badge {
+            background: rgba(48, 209, 88, 0.2);
+            color: #30d158;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:active, .settings-btn:active {
+            transform: scale(0.95);
+        }
+
+        .refresh-btn.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .team-card {
+            background: #1c1c1e;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border-left: 6px solid #0a84ff;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .team-header {
+            padding: 25px 20px;
+            position: relative;
+        }
+        
+        .team-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .team-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .league-badge {
+            display: inline-block;
+            background: rgba(10, 132, 255, 0.2);
+            color: #0a84ff;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .games-section {
+            padding: 0 20px 20px;
+        }
+
+        .game-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #38383a;
+        }
+
+        .game-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .result-badge.win {
+            background: #30d158;
+            color: #000;
+        }
+
+        .result-badge.loss {
+            background: #ff453a;
+            color: #000;
+        }
+
+        .result-badge.upcoming {
+            border: 2px solid #98989d;
+            color: #98989d;
+            background: transparent;
+        }
+
+        .game-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .game-info .date {
+            color: #98989d;
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+
+        .game-info .opponent {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .game-info.upcoming {
+            color: #98989d;
+        }
+
+        .score {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+
+        .upcoming-label {
+            color: #98989d;
+            font-size: 0.85rem;
+        }
+
+        .divider {
+            height: 1px;
+            background: #38383a;
+            margin: 15px 0;
+        }
+
+        .news-section {
+            padding: 0 20px 20px;
+            border-top: 1px solid #38383a;
+        }
+
+        .news-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 0 10px;
+            color: #0a84ff;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .news-item {
+            display: block;
+            padding: 12px 0;
+            border-bottom: 1px solid #38383a;
+            text-decoration: none;
+            color: inherit;
+            transition: background-color 0.2s;
+        }
+
+        .news-item:hover {
+            background-color: #2c2c2e;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-title {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+
+        .news-item:hover .news-title {
+            color: #0a84ff;
+        }
+
+        .news-meta {
+            color: #98989d;
+            font-size: 0.8rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #98989d;
+        }
+
+        .spinner {
+            border: 3px solid #38383a;
+            border-top: 3px solid #0a84ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ff453a22;
+            border: 1px solid #ff453a;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px;
+            color: #ff453a;
+        }
+
+        .no-games {
+            color: #98989d;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1c1c1e;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal h2 {
+            margin-bottom: 10px;
+            color: #0a84ff;
+        }
+
+        .modal p {
+            color: #98989d;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .modal input {
+            width: 100%;
+            background: #2c2c2e;
+            border: 2px solid #38383a;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: #0a84ff;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal .primary-btn {
+            background: #0a84ff;
+            color: white;
+        }
+
+        .modal .secondary-btn {
+            background: #2c2c2e;
+            color: #98989d;
+        }
+
+        /* League colors */
+        .team-card.nhl { border-left-color: #005eb8; }
+        .team-card.mlb { border-left-color: #bf0d3e; }
+        .team-card.nfl { border-left-color: #d50a0a; }
+        .team-card.nba { border-left-color: #fd5d00; }
+        .team-card.laliga { border-left-color: #ff6b35; }
+        .team-card.whl { border-left-color: #ffca28; }
+
+        .league-badge.nhl { background: rgba(0, 94, 184, 0.2); color: #005eb8; }
+        .league-badge.mlb { background: rgba(191, 13, 62, 0.2); color: #bf0d3e; }
+        .league-badge.nfl { background: rgba(213, 10, 10, 0.2); color: #d50a0a; }
+        .league-badge.nba { background: rgba(253, 93, 0, 0.2); color: #fd5d00; }
+        .league-badge.laliga { background: rgba(255, 107, 53, 0.2); color: #ff6b35; }
+        .league-badge.whl { background: rgba(255, 202, 40, 0.2); color: #ffca28; }
+
+        .calendar-btn {
+            position: absolute;
+            top: 25px;
+            right: 20px;
+            background: rgba(10, 132, 255, 0.2);
+            border: 1px solid #0a84ff;
+            color: #0a84ff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-btn:active {
+            transform: scale(0.95);
+            background: rgba(10, 132, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚡ Sports Hub</h1>
+        <p class="subtitle" id="subtitle">Loading...</p>
+        <div class="header-buttons">
+            <div id="authStatus"></div>
+            <a href="settings.html" class="settings-btn" title="Settings">⚙️</a>
+            <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+        </div>
+    </div>
+
+    <div class="container" id="container">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading your teams...</p>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2>Sign In</h2>
+            <p>Enter your email to receive a magic link. No password needed!</p>
+            <input type="email" id="emailInput" placeholder="your@email.com" />
+            <div class="modal-buttons">
+                <button class="secondary-btn" onclick="closeLoginModal()">Cancel</button>
+                <button class="primary-btn" onclick="sendMagicLink()">Send Link</button>
+            </div>
+            <p id="loginMessage" style="margin-top: 15px; text-align: center;"></p>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="team-logos.js"></script>
+    <script>
+        window.API_BASE = 'https://sports-hub-sepia.vercel.app';
+        const API_BASE = window.API_BASE;
+
+        // Escape untrusted strings before interpolating into HTML.
+        function escapeHtml(value) {
+            if (value === null || value === undefined) return '';
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Only allow http(s) URLs — blocks javascript: / data: hrefs.
+        function safeUrl(value) {
+            if (!value) return '#';
+            try {
+                const u = new URL(value, window.location.href);
+                if (u.protocol === 'http:' || u.protocol === 'https:') {
+                    return escapeHtml(u.href);
+                }
+            } catch (_) { /* fall through */ }
+            return '#';
+        }
+
+        async function syncSettingsFromServer() {
+            // If not logged in, only return localStorage teams (could be empty or temporary)
+            if (!auth.isLoggedIn()) {
+                const local = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+                return local;
+            }
+            
+            // Logged in - sync with server
+            let settings = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
+            const isDirty = localStorage.getItem('sportsHubSettingsDirty') === 'true';
+            if (isDirty) {
+                return settings;
+            }
+            try {
+                const headers = auth.getAuthHeaders();
+                const response = await fetch(`${API_BASE}/api/settings`, { headers });
+                if (response.ok) {
+                    settings = await response.json();
+                    localStorage.setItem('sportsHubSettings', JSON.stringify(settings));
+                }
+            } catch (err) {
+                console.warn('Failed to sync settings', err);
+            }
+            return settings;
+        }
+
+        // Calendar links for each team
+        const CALENDAR_LINKS = {
+            "Edmonton Oilers": {
+                ical: "webcal://www.nhl.com/oilers/schedule/downloadable",
+                google: "https://calendar.google.com/calendar/u/0/r?cid=edmonton+oilers",
+                official: "https://www.nhl.com/oilers/schedule"
+            },
+            "Pittsburgh Penguins": {
+                ical: "webcal://www.nhl.com/penguins/schedule/downloadable",
+                google: "https://calendar.google.com/calendar/u/0/r?cid=pittsburgh+penguins",
+                official: "https://www.nhl.com/penguins/schedule"
+            },
+            "Toronto Blue Jays": {
+                ical: "webcal://www.mlb.com/bluejays/schedule/downloadable",
+                google: "https://calendar.google.com/calendar/u/0/r?cid=toronto+blue+jays",
+                official: "https://www.mlb.com/bluejays/schedule"
+            },
+            "Kansas City Chiefs": {
+                ical: "webcal://www.chiefs.com/schedule.ics",
+                google: "https://calendar.google.com/calendar/u/0/r?cid=kansas+city+chiefs",
+                official: "https://www.chiefs.com/team/schedule"
+            },
+            "Toronto Raptors": {
+                ical: "webcal://www.nba.com/raptors/schedule/downloadable",
+                google: "https://calendar.google.com/calendar/u/0/r?cid=toronto+raptors",
+                official: "https://www.nba.com/raptors/schedule"
+            },
+            "Real Madrid": {
+                ical: null,
+                google: "https://calendar.google.com/calendar/u/0/r?cid=real+madrid",
+                official: "https://www.espn.com/soccer/team/schedule/_/id/86/real-madrid"
+            },
+            "Edmonton Oil Kings": {
+                ical: null,
+                google: "https://calendar.google.com/calendar/u/0/r?cid=edmonton+oil+kings",
+                official: "https://oilkings.ca/schedule"
+            }
+        };
+
+        function showCalendarMenu(teamName, event) {
+            event.stopPropagation();
+            
+            const links = CALENDAR_LINKS[teamName];
+            if (!links) {
+                alert('Calendar not available for this team');
+                return;
+            }
+            
+            // Build menu options
+            let message = teamName + ' Calendar:\n\n';
+            let options = [];
+            
+            if (links.ical) {
+                options.push('Subscribe (iCal)');
+                message += '1. 📅 Subscribe to Calendar\n';
+            }
+            message += (links.ical ? '2' : '1') + '. 🌐 View Official Schedule\n';
+            message += (links.ical ? '3' : '2') + '. ❌ Cancel';
+            
+            const choice = prompt(message);
+            if (!choice) return;
+            
+            const num = parseInt(choice);
+            
+            if (links.ical && num === 1) {
+                window.location.href = links.ical;
+            } else if (num === (links.ical ? 2 : 1)) {
+                window.open(links.official, '_blank');
+            }
+        }
+
+        const COMPLETED_STATUSES = ['OFF', 'FINAL', 'Final', 'Full Time'];
+        const UPCOMING_STATUSES = ['FUT', 'SCHEDULED', 'Scheduled'];
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function getLeagueClass(league) {
+            return league.toLowerCase().replace(' ', '');
+        }
+
+        function renderStandingsBar(team) {
+            // Show record from completed games
+            const completedGames = team.games.filter(g => COMPLETED_STATUSES.includes(g.status));
+            const wins = completedGames.filter(g => g.result === 'W').length;
+            const losses = completedGames.filter(g => g.result === 'L').length;
+            const ties = completedGames.filter(g => g.result === 'T').length;
+            
+            if (completedGames.length === 0) return '';
+            
+            const record = ties > 0 ? `${wins}-${losses}-${ties}` : `${wins}-${losses}`;
+            const winPct = ((wins / completedGames.length) * 100).toFixed(0);
+            
+            // Get next opponent
+            const nextGame = team.games.find(g => UPCOMING_STATUSES.includes(g.status));
+            let nextOppText = '';
+            if (nextGame) {
+                const h2h = completedGames.filter(g => g.opponent === nextGame.opponent);
+                const h2hWins = h2h.filter(g => g.result === 'W').length;
+                const h2hLosses = h2h.filter(g => g.result === 'L').length;
+                if (h2h.length > 0) {
+                    nextOppText = `<span style="font-size: 0.85em; opacity: 0.8;">vs ${escapeHtml(nextGame.opponent)}: ${h2hWins}-${h2hLosses}</span>`;
+                }
+            }
+            
+            return `
+                <div style="padding: 8px 15px; background: rgba(255,255,255,0.05); border-bottom: 1px solid #38383a; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${record}</strong> <span style="opacity: 0.7;">(${winPct}%)</span>
+                    </div>
+                    ${nextOppText ? `<div>${nextOppText}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderTeamCard(team) {
+            const leagueClass = getLeagueClass(team.league);
+            const logoUrl = getTeamLogo ? getTeamLogo(team.name) : null;
+            const leagueLogo = getLeagueLogo ? getLeagueLogo(team.league) : '🏟️';
+            
+            // Sort and filter games
+            const games = team.games.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const recentGames = games.filter(g => COMPLETED_STATUSES.includes(g.status)).slice(-3);
+            const upcomingGames = games.filter(g => UPCOMING_STATUSES.includes(g.status)).slice(0, 3);
+            
+            const safeName = escapeHtml(team.name);
+            const safeLeague = escapeHtml(team.league);
+            const safeNameAttr = String(team.name).replace(/'/g, "\\'");
+            let html = `
+                <div class="team-card ${leagueClass}">
+                    <div class="team-header" style="display: flex; align-items: center; gap: 15px;">
+                        ${logoUrl ? `<img src="${safeUrl(logoUrl)}" class="team-logo" alt="${safeName}" style="width: 50px; height: 50px; object-fit: contain;">` : ''}
+                        <div style="flex: 1;">
+                            <div class="team-name">${safeName}</div>
+                            <span class="league-badge ${leagueClass}">${leagueLogo} ${safeLeague}</span>
+                        </div>
+                        <button class="calendar-btn" onclick="showCalendarMenu('${escapeHtml(safeNameAttr)}', event)" title="Subscribe to ${safeName} schedule">
+                            📅
+                        </button>
+                    </div>
+                    ${renderStandingsBar(team)}
+                    <div class="games-section">
+            `;
+
+            // Recent games
+            if (recentGames.length > 0) {
+                recentGames.forEach(game => {
+                    const resultClass = game.result === 'W' ? 'win' : 'loss';
+                    const location = game.is_home ? '🏠' : '🛫';
+                    const teamScore = Number.isFinite(+game.team_score) ? +game.team_score : '';
+                    const oppScore = Number.isFinite(+game.opponent_score) ? +game.opponent_score : '';
+                    html += `
+                        <div class="game-row">
+                            <div class="result-badge ${resultClass}">${escapeHtml(game.result)}</div>
+                            <div class="game-info">
+                                <div class="date">${location} ${escapeHtml(formatDate(game.date))}</div>
+                                <div class="opponent">vs ${escapeHtml(game.opponent)}</div>
+                            </div>
+                            <div class="score">${teamScore}-${oppScore}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Divider between recent and upcoming
+            if (recentGames.length > 0 && upcomingGames.length > 0) {
+                html += '<div class="divider"></div>';
+            }
+
+            // Upcoming games
+            if (upcomingGames.length > 0) {
+                upcomingGames.forEach(game => {
+                    const location = game.is_home ? '🏠' : '🛫';
+                    html += `
+                        <div class="game-row">
+                            <div class="result-badge upcoming">•</div>
+                            <div class="game-info upcoming">
+                                <div class="date">${location} ${escapeHtml(formatDate(game.date))}</div>
+                                <div class="opponent">vs ${escapeHtml(game.opponent)}</div>
+                            </div>
+                            <div class="upcoming-label">upcoming</div>
+                        </div>
+                    `;
+                });
+            }
+
+            if (recentGames.length === 0 && upcomingGames.length === 0) {
+                html += '<div class="no-games">Offseason - No games scheduled</div>';
+            }
+
+            html += '</div>'; // Close games-section
+
+            // News section
+            if (team.news && team.news.length > 0) {
+                html += `
+                    <div class="news-section">
+                        <div class="news-header">
+                            <span>📰</span>
+                            <span>Latest News</span>
+                        </div>
+                `;
+                
+                team.news.forEach(article => {
+                    const href = safeUrl(article.url);
+                    html += `
+                        <a href="${href}" class="news-item" target="_blank" rel="noopener noreferrer">
+                            <div class="news-title">${escapeHtml(article.title)}</div>
+                            <div class="news-meta">${escapeHtml(article.source)} • ${escapeHtml(article.age)}</div>
+                        </a>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>'; // Close team-card
+            return html;
+        }
+
+        async function loadDashboard() {
+            const container = document.getElementById('container');
+            const refreshBtn = document.querySelector('.refresh-btn');
+            
+            refreshBtn.classList.add('loading');
+            refreshBtn.textContent = '↻ Loading...';
+
+            try {
+                const settings = await syncSettingsFromServer();
+                // Check if user has custom team selection
+                let teamsToLoad = settings.teams;
+                
+                // If no teams and not logged in, show empty state
+                if (!teamsToLoad || teamsToLoad.length === 0) {
+                    const user = auth.getUser();
+                    if (!user) {
+                        container.innerHTML = `
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 20px; padding: 20px;">
+                                <div style="font-size: 3rem; opacity: 0.5;">🏟️</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; text-align: center;">No Teams Yet</div>
+                                <div style="font-size: 1rem; opacity: 0.7; text-align: center; max-width: 400px;">
+                                    Sign in to sync your teams across devices, or add temporary teams to get started.
+                                </div>
+                                <div style="display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; justify-content: center;">
+                                    <button onclick="openLoginModal()" style="background: #30d158; border: none; color: #000; padding: 15px 30px; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                                        🔐 Sign In to See Your Teams
+                                    </button>
+                                    <a href="league-picker.html" style="background: #0a84ff; border: none; color: white; padding: 15px 30px; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block;">
+                                        ➕ Add Temporary Teams
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                        refreshBtn.classList.remove('loading');
+                        refreshBtn.textContent = '↻ Refresh';
+                        return;
+                    }
+                    
+                    // User is logged in but has no teams - load defaults
+                    const teamsResponse = await fetch(`${API_BASE}/api/teams`);
+                    if (!teamsResponse.ok) throw new Error('Failed to load teams');
+                    const teamsData = await teamsResponse.json();
+                    teamsToLoad = teamsData.teams;
+                }
+                
+                // Update subtitle
+                const now = new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                document.getElementById('subtitle').textContent = now;
+
+                // Check localStorage cache first for newly added teams
+                const CACHE_TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
+                const teamCache = JSON.parse(localStorage.getItem('teamCache') || '{}');
+                
+                // Fetch each team's details
+                const teamPromises = teamsToLoad.map(team => {
+                    // Use cached data if available and recent (< CACHE_TTL_MS)
+                    const cached = teamCache[team.name];
+                    if (cached && (Date.now() - new Date(cached.fetched_at).getTime()) < CACHE_TTL_MS) {
+                        console.log(`Using cached data for ${team.name}`);
+                        return Promise.resolve({
+                            name: team.name,
+                            league: cached.league,
+                            games: cached.games,
+                            news: cached.news
+                        });
+                    }
+                    
+                    return fetch(`${API_BASE}/api/team/${encodeURIComponent(team.name)}`)
+                        .then(r => {
+                            if (r.status === 404) {
+                                // Team not in API, return placeholder
+                                return {
+                                    name: team.name,
+                                    league: team.league,
+                                    abbrev: '',
+                                    recent_games: [],
+                                    upcoming_games: [],
+                                    news: [],
+                                    custom: true
+                                };
+                            }
+                            return r.json();
+                        })
+                        .catch(e => {
+                            console.error(`Failed to load ${team.name}:`, e);
+                            // Return placeholder for custom teams
+                            return {
+                                name: team.name,
+                                league: team.league,
+                                abbrev: '',
+                                recent_games: [],
+                                upcoming_games: [],
+                                news: [],
+                                custom: true
+                            };
+                        });
+                });
+                
+                const teamDetails = await Promise.all(teamPromises);
+                
+                // Render teams
+                let html = '';
+                teamDetails.forEach(team => {
+                    if (team) {
+                        // Convert to expected format
+                        const formattedTeam = {
+                            name: team.name,
+                            league: team.league,
+                            abbrev: team.abbrev || '',
+                            games: [...(team.recent_games || []), ...(team.upcoming_games || [])],
+                            news: team.news || [],
+                            custom: team.custom || false
+                        };
+                        
+                        // Ensure teams without data still show placeholder news
+                        if (formattedTeam.news.length === 0) {
+                            formattedTeam.news = [
+                                { title: `${team.name} season updates and news`, source: team.league || 'League', age: 'Updating...' },
+                                { title: `Latest ${team.name} schedule and standings`, source: 'Official', age: 'Check back soon' },
+                                { title: `${team.name} game highlights and recaps`, source: 'Local', age: 'Coming soon' },
+                                { title: `Team news and player updates`, source: team.league || 'Sports', age: 'Loading...' },
+                                { title: `Follow ${team.name} all season long`, source: 'News', age: 'Stay tuned' }
+                            ];
+                        }
+                        
+                        html += renderTeamCard(formattedTeam);
+                    }
+                });
+
+                container.innerHTML = html || '<div class="no-games">No teams found</div>';
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                container.innerHTML = `
+                    <div class="error">
+                        <strong>⚠️ Failed to load data</strong>
+                        <p>Could not connect to the API. Please check your connection and try again.</p>
+                        <p style="font-size: 0.8rem; margin-top: 10px; opacity: 0.7;">Error: ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                refreshBtn.classList.remove('loading');
+                refreshBtn.textContent = '↻ Refresh';
+            }
+        }
+
+        // Auth UI functions
+        function updateAuthUI() {
+            const authStatus = document.getElementById('authStatus');
+            
+            if (auth.isLoggedIn()) {
+                const user = auth.getUser();
+                authStatus.innerHTML = `
+                    <div class="user-badge">
+                        <span>👤 ${user.email}</span>
+                        <button onclick="handleLogout()" style="background: none; border: none; color: #ff453a; cursor: pointer; padding: 0;">×</button>
+                    </div>
+                `;
+            } else {
+                authStatus.innerHTML = '<button class="login-btn" onclick="openLoginModal()">Sign In</button>';
+            }
+        }
+
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+            document.getElementById('emailInput').focus();
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('active');
+            document.getElementById('emailInput').value = '';
+            document.getElementById('loginMessage').textContent = '';
+        }
+
+        async function sendMagicLink() {
+            const email = document.getElementById('emailInput').value.trim();
+            const messageEl = document.getElementById('loginMessage');
+            
+            if (!email || !email.includes('@')) {
+                messageEl.style.color = '#ff453a';
+                messageEl.textContent = 'Please enter a valid email';
+                return;
+            }
+            
+            try {
+                messageEl.style.color = '#0a84ff';
+                messageEl.textContent = 'Sending magic link...';
+                
+                await auth.sendMagicLink(email);
+                
+                messageEl.style.color = '#30d158';
+                messageEl.textContent = '✓ Check your email! Click the link to sign in.';
+                
+                setTimeout(() => {
+                    closeLoginModal();
+                }, 3000);
+            } catch (error) {
+                messageEl.style.color = '#ff453a';
+                messageEl.textContent = 'Failed to send. Try again.';
+                console.error('Magic link error:', error);
+            }
+        }
+
+        async function handleLogout() {
+            await auth.logout();
+            updateAuthUI();
+            loadDashboard();
+        }
+
+        // Check URL for auth callback (magic link)
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessToken = urlParams.get('access_token');
+        const refreshToken = urlParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+            // User clicked magic link
+            fetch(`${API_BASE}/api/auth/callback`, {
+                method: 'POST',
+                headers: {
+                    'access_token': accessToken,
+                    'refresh_token': refreshToken
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                auth.setSession(data.access_token, {
+                    id: data.user_id,
+                    email: data.email
+                });
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                updateAuthUI();
+                loadDashboard();
+            })
+            .catch(err => {
+                console.error('Auth callback failed:', err);
+            });
+        }
+
+        // Initialize auth UI
+        updateAuthUI();
+
+        // Auto-refresh every 30 seconds to catch new teams
+        let lastTeamCount = 0;
+        async function checkForNewTeams() {
+            const settings = await syncSettingsFromServer();
+            const currentCount = (settings.teams || []).length;
+            
+            if (currentCount !== lastTeamCount && lastTeamCount > 0) {
+                // Team count changed - reload dashboard
+                console.log('New teams detected - refreshing...');
+                loadDashboard();
+            }
+            lastTeamCount = currentCount;
+        }
+        
+        // Check every 10 seconds
+        setInterval(checkForNewTeams, 10000);
+        
+        // Load on page load
+        loadDashboard();
+
+        // Pull to refresh (basic version)
+        let touchStartY = 0;
+        document.addEventListener('touchstart', e => {
+            touchStartY = e.touches[0].clientY;
+        });
+        
+        document.addEventListener('touchmove', e => {
+            const touchY = e.touches[0].clientY;
+            const touchDiff = touchY - touchStartY;
+            
+            if (touchDiff > 100 && window.scrollY === 0) {
+                loadDashboard();
+            }
+        });
+    </script>
+</body>
+</html>

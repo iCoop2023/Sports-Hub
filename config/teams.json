@@ -1,0 +1,63 @@
+{
+  "nhl": [
+    {
+      "name": "Edmonton Oilers",
+      "abbrev": "EDM",
+      "league": "NHL"
+    },
+    {
+      "name": "Pittsburgh Penguins",
+      "abbrev": "PIT",
+      "league": "NHL"
+    }
+  ],
+  "mlb": [
+    {
+      "name": "Toronto Blue Jays",
+      "abbrev": "TOR",
+      "league": "MLB"
+    }
+  ],
+  "nfl": [
+    {
+      "name": "Kansas City Chiefs",
+      "abbrev": "KC",
+      "league": "NFL"
+    }
+  ],
+  "nba": [
+    {
+      "name": "Toronto Raptors",
+      "abbrev": "TOR",
+      "league": "NBA"
+    }
+  ],
+  "cfl": [
+    {
+      "name": "Edmonton Elks",
+      "abbrev": "EDM",
+      "league": "CFL"
+    }
+  ],
+  "cebl": [
+    {
+      "name": "Edmonton Stingers",
+      "league": "CEBL"
+    }
+  ],
+  "whl": [
+    {
+      "name": "Edmonton Oil Kings",
+      "abbrev": "EOK",
+      "league": "WHL",
+      "team_id": "20"
+    }
+  ],
+  "soccer": [
+    {
+      "name": "Real Madrid",
+      "abbrev": "RMA",
+      "league": "La Liga"
+    }
+  ]
+}
