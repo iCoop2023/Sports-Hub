@@ -112,9 +112,11 @@ except Exception as e:
 
 # CORS — restrict to the frontend origins we actually serve.
 # Override via CORS_ALLOWED_ORIGINS env var: comma-separated list of origins.
-# The previous "*" + allow_credentials=True combination was unsafe (and is
-# also rejected by modern browsers), letting any site make authenticated
-# requests to the API.
+# Vercel generates per-deployment URLs like
+#   sports-<hash>-<team>.vercel.app
+# in addition to the canonical sports-hub-sepia.vercel.app, so we also
+# accept any *.vercel.app subdomain via regex. Override the pattern with
+# CORS_ALLOWED_ORIGIN_REGEX if you need to tighten it.
 _default_origins = [
     "https://sports-hub-sepia.vercel.app",
     "http://localhost:3000",
@@ -126,10 +128,15 @@ ALLOWED_ORIGINS = (
     if _env_origins
     else _default_origins
 )
+ALLOWED_ORIGIN_REGEX = os.environ.get(
+    "CORS_ALLOWED_ORIGIN_REGEX",
+    r"https://[a-z0-9-]+\.vercel\.app",
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
