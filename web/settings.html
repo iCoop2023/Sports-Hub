@@ -466,6 +466,20 @@
             </div>
         </div>
 
+        <!-- Data Refresh -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Data</div>
+                <div class="section-subtitle">Rebuild schedules and news from live sources</div>
+            </div>
+            <div style="padding: 20px;">
+                <button id="serverRefreshBtn" onclick="triggerServerRefresh()" style="width:100%; background:#ff9f0a; border:none; color:#000; padding:18px; border-radius:12px; font-size:1.1rem; font-weight:700; cursor:pointer;">
+                    ↻ Refresh All Data
+                </button>
+                <p id="refreshStatus" style="margin-top:12px; text-align:center; font-size:0.9rem; color:#98989d;"></p>
+            </div>
+        </div>
+
         <!-- Auto-save enabled - button hidden -->
         <!-- <button class="save-btn" onclick="saveSettings()">Save Settings</button> -->
     </div>
@@ -763,6 +777,65 @@
             const newsCount = document.getElementById('newsCount');
             if (newsCount) {
                 newsCount.addEventListener('input', autoSave);
+            }
+        }
+
+        async function triggerServerRefresh() {
+            const btn = document.getElementById('serverRefreshBtn');
+            const status = document.getElementById('refreshStatus');
+            btn.disabled = true;
+            btn.textContent = '↻ Refreshing…';
+            status.textContent = 'Rebuilding schedules and news from live sources…';
+            status.style.color = '#98989d';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/refresh`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                const data = await res.json();
+
+                if (data.status === 'refresh_started' || data.status === 'already_running') {
+                    // Poll until done
+                    status.textContent = 'Refresh running — checking status…';
+                    const started = Date.now();
+                    const poll = setInterval(async () => {
+                        if (Date.now() - started > 120000) {
+                            clearInterval(poll);
+                            status.textContent = 'Refresh is taking a while — check back soon.';
+                            btn.disabled = false;
+                            btn.textContent = '↻ Refresh All Data';
+                            return;
+                        }
+                        try {
+                            const s = await fetch(`${API_BASE}/api/refresh/status`, { credentials: 'include' });
+                            const sd = await s.json();
+                            if (sd.status === 'success') {
+                                clearInterval(poll);
+                                status.style.color = '#30d158';
+                                status.textContent = '✓ Data refreshed! Head back to the dashboard.';
+                                btn.disabled = false;
+                                btn.textContent = '↻ Refresh All Data';
+                            } else if (sd.status === 'error') {
+                                clearInterval(poll);
+                                status.style.color = '#ff453a';
+                                status.textContent = '⚠️ Refresh failed: ' + (sd.message || 'unknown error');
+                                btn.disabled = false;
+                                btn.textContent = '↻ Refresh All Data';
+                            }
+                        } catch (_) {}
+                    }, 3000);
+                } else {
+                    status.style.color = '#ff453a';
+                    status.textContent = '⚠️ ' + (data.message || 'Unexpected response');
+                    btn.disabled = false;
+                    btn.textContent = '↻ Refresh All Data';
+                }
+            } catch (e) {
+                status.style.color = '#ff453a';
+                status.textContent = '⚠️ Could not reach server.';
+                btn.disabled = false;
+                btn.textContent = '↻ Refresh All Data';
             }
         }
 
