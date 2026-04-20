@@ -10,6 +10,7 @@ venv/
 
 # Local caches / generated data — don't commit
 data/cache/
+!data/cache/all_teams.json
 sports_dashboard.png
 
 # Editor

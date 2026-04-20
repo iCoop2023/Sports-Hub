@@ -454,8 +454,9 @@ async def get_team(team_name: str):
     """Get detailed data for a specific team."""
     data = load_cache()
     team_info = data.get("teams", {}).get(team_name)
-    
-    if team_info:
+
+    # Use cached games only if they actually exist (seed entries have games=[])
+    if team_info and team_info.get("games"):
         league = team_info.get("league", "Unknown")
         news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
         return format_team_payload(
@@ -465,9 +466,30 @@ async def get_team(team_name: str):
             team_info.get("games", []),
             news_data
         )
-    
-    # Not in cache – fetch live data so new teams still show real news
-    detection, games, news = fetch_live_team_data(team_name)
+
+    # Not in cache or games empty – fetch live
+    try:
+        detection, games, news = fetch_live_team_data(team_name)
+    except HTTPException:
+        if not team_info:
+            raise
+        # Team is in seed (known league) but live fetch failed; return gracefully
+        league = team_info.get("league", "Unknown")
+        return format_team_payload(team_name, league, team_info.get("abbrev", ""), [], [])
+
+    # Cache the result so the next request within this instance is instant
+    if games:
+        try:
+            cache = load_cache()
+            cache.setdefault("teams", {})[team_name] = {
+                "league": detection["league"],
+                "abbrev": detection.get("abbrev", ""),
+                "games": games,
+            }
+            CACHE_FILE.write_text(json.dumps(cache, indent=2))
+        except Exception:
+            pass
+
     news = fetch_latest_news(team_name, detection.get("league", "Unknown"), news)
     return format_team_payload(
         team_name,
