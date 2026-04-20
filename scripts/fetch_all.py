@@ -6,10 +6,17 @@ Fetches, deduplicates, and caches all team data.
 
 import json
 import os
+import sys
 import requests
 from datetime import datetime, timedelta
 from pathlib import Path
-from collections import defaultdict
+
+# Reuse the well-tested fetch functions from league_discovery
+sys.path.insert(0, str(Path(__file__).parent))
+from league_discovery import (
+    fetch_mlb_schedule, fetch_espn_schedule, MLB_TEAM_IDS,
+    ESPN_NBA_IDS, ESPN_NFL_IDS,
+)
 
 # Configuration
 CACHE_DIR = Path(__file__).parent.parent / "data" / "cache"
@@ -277,39 +284,39 @@ def main():
             "games": sorted(games, key=lambda x: x.get('date', ''))
         }
     
-    # MLB
+    # MLB — official MLB Stats API
     for team in teams.get("mlb", []):
-        print(f"Fetching {team['name']}...")
-        games = fetch_espn_team("MLB", team['abbrev'], team['name'])
+        print(f"Fetching {team['name']} (MLB)...")
+        games = fetch_mlb_schedule(team['name'])
         all_results[team['name']] = {
             "abbrev": team['abbrev'],
             "league": "MLB",
             "games": sorted(games, key=lambda x: x.get('date', ''))
         }
-    
-    # NFL
+
+    # NFL — ESPN with hardcoded IDs
     for team in teams.get("nfl", []):
-        print(f"Fetching {team['name']}...")
-        games = fetch_espn_team("NFL", team['abbrev'], team['name'])
+        print(f"Fetching {team['name']} (NFL)...")
+        games = fetch_espn_schedule(team['name'], team['abbrev'], "NFL")
         all_results[team['name']] = {
             "abbrev": team['abbrev'],
             "league": "NFL",
             "games": sorted(games, key=lambda x: x.get('date', ''))
         }
-    
-    # NBA
+
+    # NBA — ESPN with hardcoded IDs
     for team in teams.get("nba", []):
-        print(f"Fetching {team['name']}...")
-        games = fetch_espn_team("NBA", team['abbrev'], team['name'])
+        print(f"Fetching {team['name']} (NBA)...")
+        games = fetch_espn_schedule(team['name'], team['abbrev'], "NBA")
         all_results[team['name']] = {
             "abbrev": team['abbrev'],
             "league": "NBA",
             "games": sorted(games, key=lambda x: x.get('date', ''))
         }
-    
-    # La Liga
+
+    # La Liga — ESPN soccer
     for team in teams.get("soccer", []):
-        print(f"Fetching {team['name']}...")
+        print(f"Fetching {team['name']} (soccer)...")
         games = fetch_espn_team("La Liga", team['abbrev'], team['name'])
         all_results[team['name']] = {
             "abbrev": team['abbrev'],

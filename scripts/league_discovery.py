@@ -5,7 +5,55 @@ Universal team discovery - detect league and fetch data for any team
 
 import os
 import requests
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+
+# ---------------------------------------------------------------------------
+# Official MLB Stats API team IDs (free, no auth, very reliable)
+# ---------------------------------------------------------------------------
+MLB_TEAM_IDS = {
+    "Arizona Diamondbacks": 109, "Atlanta Braves": 144, "Baltimore Orioles": 110,
+    "Boston Red Sox": 111, "Chicago Cubs": 112, "Chicago White Sox": 145,
+    "Cincinnati Reds": 113, "Cleveland Guardians": 114, "Colorado Rockies": 115,
+    "Detroit Tigers": 116, "Houston Astros": 117, "Kansas City Royals": 118,
+    "Los Angeles Angels": 108, "Los Angeles Dodgers": 119, "Miami Marlins": 146,
+    "Milwaukee Brewers": 158, "Minnesota Twins": 142, "New York Mets": 121,
+    "New York Yankees": 147, "Oakland Athletics": 133, "Philadelphia Phillies": 143,
+    "Pittsburgh Pirates": 134, "San Diego Padres": 135, "San Francisco Giants": 137,
+    "Seattle Mariners": 136, "St. Louis Cardinals": 138, "Tampa Bay Rays": 139,
+    "Texas Rangers": 140, "Toronto Blue Jays": 141, "Washington Nationals": 120,
+}
+
+# ---------------------------------------------------------------------------
+# Hardcoded ESPN numeric team IDs — avoids the slow/fragile two-step lookup
+# ---------------------------------------------------------------------------
+ESPN_NBA_IDS = {
+    "Atlanta Hawks": 1, "Boston Celtics": 2, "Brooklyn Nets": 17,
+    "Charlotte Hornets": 30, "Chicago Bulls": 4, "Cleveland Cavaliers": 5,
+    "Dallas Mavericks": 6, "Denver Nuggets": 7, "Detroit Pistons": 8,
+    "Golden State Warriors": 9, "Houston Rockets": 10, "Indiana Pacers": 11,
+    "LA Clippers": 12, "Los Angeles Clippers": 12, "Los Angeles Lakers": 13,
+    "Memphis Grizzlies": 29, "Miami Heat": 14, "Milwaukee Bucks": 15,
+    "Minnesota Timberwolves": 16, "New Orleans Pelicans": 3, "New York Knicks": 18,
+    "Oklahoma City Thunder": 25, "Orlando Magic": 19, "Philadelphia 76ers": 20,
+    "Phoenix Suns": 21, "Portland Trail Blazers": 22, "Sacramento Kings": 23,
+    "San Antonio Spurs": 24, "Toronto Raptors": 28, "Utah Jazz": 26,
+    "Washington Wizards": 27,
+}
+
+ESPN_NFL_IDS = {
+    "Arizona Cardinals": 22, "Atlanta Falcons": 1, "Baltimore Ravens": 33,
+    "Buffalo Bills": 2, "Carolina Panthers": 29, "Chicago Bears": 3,
+    "Cincinnati Bengals": 4, "Cleveland Browns": 5, "Dallas Cowboys": 6,
+    "Denver Broncos": 7, "Detroit Lions": 8, "Green Bay Packers": 9,
+    "Houston Texans": 34, "Indianapolis Colts": 11, "Jacksonville Jaguars": 30,
+    "Kansas City Chiefs": 12, "Las Vegas Raiders": 13, "Los Angeles Chargers": 24,
+    "Los Angeles Rams": 14, "Miami Dolphins": 15, "Minnesota Vikings": 16,
+    "New England Patriots": 17, "New Orleans Saints": 18, "New York Giants": 19,
+    "New York Jets": 20, "Philadelphia Eagles": 21, "Pittsburgh Steelers": 23,
+    "San Francisco 49ers": 25, "Seattle Seahawks": 26, "Tampa Bay Buccaneers": 27,
+    "Tennessee Titans": 10, "Washington Commanders": 28,
+}
 
 # League API patterns
 LEAGUE_APIS = {
@@ -282,8 +330,9 @@ def fetch_team_schedule(team_name: str) -> Optional[List[Dict]]:
     config = detection["config"]
     
     if config["schedule"] == "placeholder":
-        # Season hasn't started yet
         return []
+    elif league == "MLB":
+        return fetch_mlb_schedule(team_name)
     elif config["schedule"] == "espn":
         return fetch_espn_schedule(team_name, abbrev, league)
     elif config["schedule"] == "espn_soccer":
@@ -327,77 +376,145 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
         return []
 
 
-def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
-    """Fetch schedule from ESPN API."""
-    sport_map = {"MLB": "baseball/mlb", "NBA": "basketball/nba", "NFL": "football/nfl",
-                 "CFL": "football/cfl", "WNBA": "basketball/wnba"}
-    sport = sport_map.get(league)
-    if not sport:
-        return []
-
-    # ESPN schedule endpoints require a numeric team ID, not an abbreviation.
-    # Look it up from the teams list first.
-    team_id = None
-    try:
-        teams_resp = requests.get(
-            f"https://site.api.espn.com/apis/site/v2/sports/{sport}/teams",
-            timeout=10)
-        teams_resp.raise_for_status()
-        for entry in (teams_resp.json()
-                      .get("sports", [{}])[0]
-                      .get("leagues", [{}])[0]
-                      .get("teams", [])):
-            t = entry.get("team", {})
-            if t.get("abbreviation", "").upper() == abbrev.upper():
-                team_id = t.get("id")
-                break
-    except Exception as e:
-        print(f"ESPN team-ID lookup failed for {abbrev}: {e}")
-
+def fetch_mlb_schedule(team_name: str) -> List[Dict]:
+    """Fetch MLB schedule from the official MLB Stats API (free, no auth)."""
+    team_id = MLB_TEAM_IDS.get(team_name)
     if not team_id:
-        print(f"ESPN: could not resolve numeric ID for {abbrev} ({league})")
+        print(f"MLB: unknown team '{team_name}'")
         return []
 
-    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/teams/{team_id}/schedule"
+    today = datetime.now()
+    start = (today - timedelta(days=30)).strftime("%Y-%m-%d")
+    end   = (today + timedelta(days=60)).strftime("%Y-%m-%d")
+    url = (f"https://statsapi.mlb.com/api/v1/schedule"
+           f"?sportId=1&teamId={team_id}&startDate={start}&endDate={end}&hydrate=team")
     try:
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
+
+        games = []
+        for date_entry in data.get("dates", []):
+            for game in date_entry.get("games", []):
+                home = game["teams"]["home"]
+                away = game["teams"]["away"]
+                is_home = home["team"]["id"] == team_id
+                my  = home if is_home else away
+                opp = away if is_home else home
+
+                state  = game.get("status", {}).get("abstractGameState", "Preview")
+                detail = game.get("status", {}).get("detailedState", "Scheduled")
+
+                if state == "Final":
+                    my_s  = my.get("score", 0) or 0
+                    op_s  = opp.get("score", 0) or 0
+                    result = "W" if my_s > op_s else ("L" if my_s < op_s else "T")
+                    status = "Final"
+                elif state == "Live":
+                    result = "LIVE"
+                    status = "In Progress"
+                else:
+                    result = "SCHEDULED"
+                    status = "Scheduled"
+
+                games.append({
+                    "id": str(game.get("gamePk", "")),
+                    "date": game.get("gameDate", "")[:10],
+                    "opponent": opp["team"].get("name", ""),
+                    "team_score": my.get("score", 0) or 0,
+                    "opponent_score": opp.get("score", 0) or 0,
+                    "status": status,
+                    "is_home": is_home,
+                    "result": result,
+                    "league": "MLB",
+                })
+        return games
+    except Exception as e:
+        print(f"MLB Stats API fetch failed for {team_name}: {e}")
+        return []
+
+
+def _fetch_espn_by_id(team_name: str, numeric_id: int, sport_path: str, league: str,
+                      abbrev: str) -> List[Dict]:
+    """Core ESPN schedule fetch using a known numeric team ID."""
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/teams/{numeric_id}/schedule"
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+
         games = []
         for event in data.get("events", []):
             comp = event["competitions"][0]
-            home_team = comp["competitors"][0] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][1]
-            away_team = comp["competitors"][1] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][0]
-            
-            is_home = home_team["team"]["abbreviation"] == abbrev.upper()
-            opponent = away_team["team"]["displayName"] if is_home else home_team["team"]["displayName"]
-            
-            # Extract scores safely
-            home_score = home_team.get("score", 0)
-            away_score = away_team.get("score", 0)
-            
-            # Handle both dict and int score formats
-            if isinstance(home_score, dict):
-                home_score = int(float(home_score.get("value", 0)))
-            if isinstance(away_score, dict):
-                away_score = int(float(away_score.get("value", 0)))
-            
+            competitors = comp["competitors"]
+            home_team = next((c for c in competitors if c["homeAway"] == "home"), competitors[0])
+            away_team = next((c for c in competitors if c["homeAway"] == "away"), competitors[1])
+
+            is_home = str(home_team["team"].get("id")) == str(numeric_id)
+            opponent = (away_team if is_home else home_team)["team"].get("displayName", "")
+
+            def _score(c):
+                s = c.get("score", 0)
+                if isinstance(s, dict):
+                    return int(float(s.get("value", 0)))
+                try:
+                    return int(float(s))
+                except (TypeError, ValueError):
+                    return 0
+
+            home_score = _score(home_team)
+            away_score = _score(away_team)
+
             games.append({
                 "id": event["id"],
-                "date": event["date"][:10] if "T" in event["date"] else event["date"],
+                "date": event["date"][:10] if "T" in event.get("date", "") else event.get("date", ""),
                 "opponent": opponent,
                 "team_score": home_score if is_home else away_score,
                 "opponent_score": away_score if is_home else home_score,
                 "status": comp["status"]["type"]["description"],
                 "is_home": is_home,
                 "result": get_espn_result(comp, is_home),
-                "league": league
+                "league": league,
             })
         return games
     except Exception as e:
-        print(f"ESPN fetch failed for {team_name}: {e}")
+        print(f"ESPN fetch failed for {team_name} (id={numeric_id}): {e}")
         return []
+
+
+def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
+    """Fetch schedule from ESPN API using hardcoded numeric IDs."""
+    sport_map = {
+        "NBA": ("basketball/nba", ESPN_NBA_IDS),
+        "NFL": ("football/nfl",   ESPN_NFL_IDS),
+        "CFL": ("football/cfl",   {}),
+    }
+    entry = sport_map.get(league)
+    if not entry:
+        return []
+    sport_path, id_map = entry
+
+    numeric_id = id_map.get(team_name)
+    if not numeric_id:
+        # Last-resort live lookup
+        try:
+            r = requests.get(
+                f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/teams",
+                timeout=10)
+            r.raise_for_status()
+            for t in (r.json().get("sports", [{}])[0]
+                      .get("leagues", [{}])[0].get("teams", [])):
+                if t.get("team", {}).get("abbreviation", "").upper() == abbrev.upper():
+                    numeric_id = t["team"]["id"]
+                    break
+        except Exception as e:
+            print(f"ESPN ID lookup failed for {team_name}: {e}")
+
+    if not numeric_id:
+        print(f"ESPN: no numeric ID found for {team_name} ({league})")
+        return []
+
+    return _fetch_espn_by_id(team_name, numeric_id, sport_path, league, abbrev)
 
 
 def fetch_espn_soccer_schedule(team_name: str, team_id: str, league_code: str) -> List[Dict]:
