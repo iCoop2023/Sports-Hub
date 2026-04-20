@@ -4,13 +4,15 @@ Sports Hub API Server
 FastAPI backend for iOS app
 """
 
-from fastapi import FastAPI, HTTPException, Header, Cookie
+from fastapi import FastAPI, HTTPException, Header, Cookie, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pathlib import Path
 import json
 import os
-import subprocess
+import sys
+import shutil
+import tempfile
 from datetime import datetime
 from typing import Dict, List, Optional, Union
 from pydantic import BaseModel
@@ -148,12 +150,27 @@ if auth_router:
 
 # Paths
 BASE_DIR = Path(__file__).parent.parent
-CACHE_FILE = BASE_DIR / "data" / "cache" / "all_teams.json"
 DASHBOARD_IMG = BASE_DIR / "sports_dashboard.png"
-REFRESH_SCRIPT = BASE_DIR / "scripts" / "run_refresh.py"
-REFRESH_STATUS = BASE_DIR / "data" / "cache" / "refresh_status.json"
 SETTINGS_FILE = BASE_DIR / "data" / "user_settings.json"
-NEWS_CACHE_FILE = BASE_DIR / "data" / "cache" / "news_cache.json"
+
+# Cache and status live in /tmp so they are writable on serverless platforms.
+# The bundled data/cache files are used as a read-only seed if /tmp is empty.
+_TMP_CACHE_DIR = Path(tempfile.gettempdir()) / "sports_hub"
+_TMP_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+CACHE_FILE = _TMP_CACHE_DIR / "all_teams.json"
+NEWS_CACHE_FILE = _TMP_CACHE_DIR / "news_cache.json"
+REFRESH_STATUS = _TMP_CACHE_DIR / "refresh_status.json"
+
+# Seed from the bundled copy if the writable copy doesn't exist yet
+_BUNDLED_CACHE = BASE_DIR / "data" / "cache" / "all_teams.json"
+_BUNDLED_NEWS  = BASE_DIR / "data" / "cache" / "news_cache.json"
+if not CACHE_FILE.exists() and _BUNDLED_CACHE.exists():
+    import shutil
+    shutil.copy2(_BUNDLED_CACHE, CACHE_FILE)
+if not NEWS_CACHE_FILE.exists() and _BUNDLED_NEWS.exists():
+    import shutil
+    shutil.copy2(_BUNDLED_NEWS, NEWS_CACHE_FILE)
 
 
 def fetch_live_team_data(team_name: str):
@@ -470,40 +487,100 @@ async def get_dashboard_image():
         filename="sports_dashboard.png"
     )
 
+def _run_refresh_inprocess(refresh_id: str) -> None:
+    """Fetch all teams and rebuild the cache entirely in-process.
+    Runs inside a BackgroundTask so it doesn't block the HTTP response."""
+    def _write_status(payload: dict) -> None:
+        payload.setdefault("refresh_id", refresh_id)
+        payload.setdefault("updated_at", datetime.utcnow().isoformat() + "Z")
+        REFRESH_STATUS.write_text(json.dumps(payload))
+
+    _write_status({"status": "running", "message": "Fetching schedules…",
+                   "started_at": datetime.utcnow().isoformat() + "Z"})
+    try:
+        scripts_dir = str(BASE_DIR / "scripts")
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+
+        from fetch_all import load_teams, fetch_nhl_team, fetch_espn_team, fetch_whl_team
+
+        teams = load_teams()
+        all_results: Dict = {}
+
+        for team in teams.get("nhl", []):
+            try:
+                games = fetch_nhl_team(team["abbrev"], team["name"])
+                all_results[team["name"]] = {"abbrev": team["abbrev"], "league": "NHL",
+                                             "games": sorted(games, key=lambda x: x.get("date", ""))}
+            except Exception as e:
+                print(f"NHL fetch failed for {team['name']}: {e}")
+
+        for league in ("MLB", "NFL", "NBA", "CFL"):
+            for team in teams.get(league.lower(), []):
+                try:
+                    games = fetch_espn_team(league, team["abbrev"], team["name"])
+                    all_results[team["name"]] = {"abbrev": team["abbrev"], "league": league,
+                                                 "games": sorted(games, key=lambda x: x.get("date", ""))}
+                except Exception as e:
+                    print(f"{league} fetch failed for {team['name']}: {e}")
+
+        for team in teams.get("soccer", []):
+            try:
+                games = fetch_espn_team("La Liga", team["abbrev"], team["name"])
+                all_results[team["name"]] = {"abbrev": team["abbrev"], "league": "La Liga",
+                                             "games": sorted(games, key=lambda x: x.get("date", ""))}
+            except Exception as e:
+                print(f"Soccer fetch failed for {team['name']}: {e}")
+
+        for team in teams.get("whl", []):
+            if not team.get("team_id"):
+                continue
+            try:
+                games = fetch_whl_team(team["team_id"])
+                all_results[team["name"]] = {"abbrev": team.get("abbrev", ""), "league": "WHL",
+                                             "games": sorted(games, key=lambda x: x.get("date", ""))}
+            except Exception as e:
+                print(f"WHL fetch failed for {team['name']}: {e}")
+
+        _write_status({"status": "running", "message": "Fetching news…",
+                       "started_at": datetime.utcnow().isoformat() + "Z"})
+
+        try:
+            from fetch_news import search_team_news
+            news_cache: Dict = {}
+            for name, info in all_results.items():
+                try:
+                    news_cache[name] = search_team_news(name, info["league"])
+                except Exception:
+                    pass
+            NEWS_CACHE_FILE.write_text(json.dumps({"teams": news_cache}, indent=2))
+        except Exception as e:
+            print(f"News fetch failed: {e}")
+
+        CACHE_FILE.write_text(json.dumps({"fetched_at": datetime.utcnow().isoformat(),
+                                          "teams": all_results}, indent=2))
+
+        _write_status({"status": "success",
+                       "message": f"Refreshed {len(all_results)} teams.",
+                       "completed_at": datetime.utcnow().isoformat() + "Z"})
+
+    except Exception as exc:
+        _write_status({"status": "error", "message": str(exc),
+                       "completed_at": datetime.utcnow().isoformat() + "Z"})
+
+
 @app.post("/api/refresh")
-async def refresh_data(force: bool = False):
-    """Trigger a background job that rebuilds the cache."""
+async def refresh_data(background_tasks: BackgroundTasks, force: bool = False):
+    """Trigger an in-process background refresh of all team data."""
     status = read_refresh_status()
     if status.get("status") == "running" and not force:
-        return {
-            "status": "already_running",
-            "message": "Refresh already running",
-            "refresh_id": status.get("refresh_id"),
-            "started_at": status.get("started_at")
-        }
-
-    if not REFRESH_SCRIPT.exists():
-        raise HTTPException(status_code=500, detail="Refresh script missing")
+        return {"status": "already_running", "message": "Refresh already in progress.",
+                "refresh_id": status.get("refresh_id")}
 
     refresh_id = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-
-    env = os.environ.copy()
-    env["SPORTS_HUB_REFRESH_ID"] = refresh_id
-
-    try:
-        subprocess.Popen(
-            ["python3", str(REFRESH_SCRIPT), "--refresh-id", refresh_id],
-            cwd=BASE_DIR,
-            env=env
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed to start refresh: {exc}")
-
-    return {
-        "status": "refresh_started",
-        "refresh_id": refresh_id,
-        "message": "Refresh started. Check /api/refresh/status for updates."
-    }
+    background_tasks.add_task(_run_refresh_inprocess, refresh_id)
+    return {"status": "refresh_started", "refresh_id": refresh_id,
+            "message": "Refresh started. Poll /api/refresh/status for updates."}
 
 
 @app.get("/api/refresh/status")
