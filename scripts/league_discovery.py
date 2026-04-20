@@ -304,12 +304,16 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
         resp.raise_for_status()
         data = resp.json()
         
+        nhl_abbrev_to_name = {v: k for k, v in LEAGUE_APIS["NHL"]["teams"].items()}
+
         games = []
         for game in data.get("games", []):
+            opp_abbrev = game.get("opponentAbbrev", "")
+            opponent_name = nhl_abbrev_to_name.get(opp_abbrev, opp_abbrev)
             games.append({
                 "id": game["id"],
                 "date": game["gameDate"][:10],
-                "opponent": game.get("opponentAbbrev", ""),
+                "opponent": opponent_name,
                 "team_score": game.get("teamScore", 0),
                 "opponent_score": game.get("opponentScore", 0),
                 "status": game.get("gameState", ""),
@@ -343,7 +347,7 @@ def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
             away_team = comp["competitors"][1] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][0]
             
             is_home = home_team["team"]["abbreviation"] == abbrev.upper()
-            opponent = away_team["team"]["abbreviation"] if is_home else home_team["team"]["abbreviation"]
+            opponent = away_team["team"]["displayName"] if is_home else home_team["team"]["displayName"]
             
             # Extract scores safely
             home_score = home_team.get("score", 0)

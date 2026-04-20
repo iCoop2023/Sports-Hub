@@ -21,30 +21,30 @@ WHL_TEAM_IDS = {
     "Medicine Hat Tigers": "212"
 }
 
-# Team ID to name mapping
+# Team ID to full name mapping
 WHL_TEAM_NAMES = {
-    "207": "CGY",
-    "209": "EDM",
-    "211": "LTH",
-    "212": "MH",
-    "213": "PG",
-    "214": "PA",
-    "215": "RD",
-    "216": "SWC",
-    "217": "KAM",
-    "218": "VAN",
-    "219": "VIC",
-    "220": "KEL",
-    "221": "POR",
-    "222": "SEA",
-    "223": "SPO",
-    "224": "TRI",
-    "225": "EVE",
-    "226": "WPG",
-    "227": "MOO",
-    "228": "SAS",
-    "229": "REG",
-    "230": "BRN"
+    "207": "Calgary Hitmen",
+    "209": "Edmonton Oil Kings",
+    "211": "Lethbridge Hurricanes",
+    "212": "Medicine Hat Tigers",
+    "213": "Prince George Cougars",
+    "214": "Prince Albert Raiders",
+    "215": "Red Deer Rebels",
+    "216": "Swift Current Broncos",
+    "217": "Kamloops Blazers",
+    "218": "Vancouver Giants",
+    "219": "Victoria Royals",
+    "220": "Kelowna Rockets",
+    "221": "Portland Winterhawks",
+    "222": "Seattle Thunderbirds",
+    "223": "Spokane Chiefs",
+    "224": "Tri-City Americans",
+    "225": "Everett Silvertips",
+    "226": "Winnipeg Ice",
+    "227": "Moose Jaw Warriors",
+    "228": "Saskatoon Blades",
+    "229": "Regina Pats",
+    "230": "Brandon Wheat Kings"
 }
 
 def fetch_whl_schedule(team_id):
