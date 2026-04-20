@@ -254,13 +254,15 @@ DEFAULT_SETTINGS = {
     "newsCount": 5
 }
 
-def load_cache():
-    """Load cached team data."""
+def load_cache() -> dict:
+    """Load cached team data, returning an empty structure if not yet populated."""
     if not CACHE_FILE.exists():
-        raise HTTPException(status_code=503, detail="Cache not initialized")
-    
-    with open(CACHE_FILE) as f:
-        return json.load(f)
+        return {"teams": {}}
+    try:
+        with open(CACHE_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {"teams": {}}
 
 
 def default_user_settings() -> dict:

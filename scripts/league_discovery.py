@@ -329,12 +329,36 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
 
 def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
     """Fetch schedule from ESPN API."""
-    sport_map = {"MLB": "baseball/mlb", "NBA": "basketball/nba", "NFL": "football/nfl"}
+    sport_map = {"MLB": "baseball/mlb", "NBA": "basketball/nba", "NFL": "football/nfl",
+                 "CFL": "football/cfl", "WNBA": "basketball/wnba"}
     sport = sport_map.get(league)
     if not sport:
         return []
-    
-    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/teams/{abbrev}/schedule"
+
+    # ESPN schedule endpoints require a numeric team ID, not an abbreviation.
+    # Look it up from the teams list first.
+    team_id = None
+    try:
+        teams_resp = requests.get(
+            f"https://site.api.espn.com/apis/site/v2/sports/{sport}/teams",
+            timeout=10)
+        teams_resp.raise_for_status()
+        for entry in (teams_resp.json()
+                      .get("sports", [{}])[0]
+                      .get("leagues", [{}])[0]
+                      .get("teams", [])):
+            t = entry.get("team", {})
+            if t.get("abbreviation", "").upper() == abbrev.upper():
+                team_id = t.get("id")
+                break
+    except Exception as e:
+        print(f"ESPN team-ID lookup failed for {abbrev}: {e}")
+
+    if not team_id:
+        print(f"ESPN: could not resolve numeric ID for {abbrev} ({league})")
+        return []
+
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/teams/{team_id}/schedule"
     try:
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
