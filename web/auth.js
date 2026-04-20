@@ -45,6 +45,26 @@ class AuthManager {
         localStorage.removeItem('auth_token');
     }
 
+    async validateSession() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.user_id && data.email) {
+                    this.setUser({ id: data.user_id, email: data.email });
+                    return true;
+                }
+            }
+            this.clearUser();
+            return false;
+        } catch (e) {
+            // Network error — keep whatever is cached locally
+            return this.isLoggedIn();
+        }
+    }
+
     async logout() {
         try {
             await fetch(`${API_BASE_URL}/api/auth/logout`, {

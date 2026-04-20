@@ -127,10 +127,32 @@
         }
         
         .team-logo {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .team-logo-wrapper {
+            position: relative;
             width: 50px;
             height: 50px;
-            object-fit: contain;
             flex-shrink: 0;
+        }
+
+        .team-logo-fallback {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
         }
 
         .team-name {
@@ -252,7 +274,7 @@
             border-bottom: 1px solid #38383a;
             text-decoration: none;
             color: inherit;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, color 0.2s;
         }
 
         .news-item:hover {
@@ -318,7 +340,7 @@
 
         /* Login Modal */
         .modal {
-            display: none;
+            display: flex;
             position: fixed;
             top: 0;
             left: 0;
@@ -328,10 +350,16 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.25s ease, visibility 0.25s;
         }
 
         .modal.active {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
         }
 
         .modal-content {
@@ -340,18 +368,14 @@
             padding: 30px;
             max-width: 400px;
             width: 90%;
-            animation: slideUp 0.3s ease-out;
+            transform: translateY(40px);
+            opacity: 0;
+            transition: transform 0.25s ease, opacity 0.25s ease;
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .modal.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
         }
 
         .modal h2 {
@@ -651,6 +675,8 @@
             const leagueClass = getLeagueClass(team.league);
             const logoUrl = getTeamLogo ? getTeamLogo(team.name) : null;
             const leagueLogo = getLeagueLogo ? getLeagueLogo(team.league) : '🏟️';
+            const teamColor = getTeamColor ? getTeamColor(team.name) : '#0a84ff';
+            const initials = team.name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('');
             
             // Sort and filter games
             const games = team.games.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -663,7 +689,10 @@
             let html = `
                 <div class="team-card ${leagueClass}">
                     <div class="team-header" style="display: flex; align-items: center; gap: 15px;">
-                        ${logoUrl ? `<img src="${safeUrl(logoUrl)}" class="team-logo" alt="${safeName}" style="width: 50px; height: 50px; object-fit: contain;">` : ''}
+                        <div class="team-logo-wrapper">
+                            <div class="team-logo-fallback" style="background:${teamColor}">${initials}</div>
+                            ${logoUrl ? `<img src="${safeUrl(logoUrl)}" class="team-logo" alt="${safeName}" onerror="this.style.display='none'">` : ''}
+                        </div>
                         <div style="flex: 1;">
                             <div class="team-name">${safeName}</div>
                             <span class="league-badge ${leagueClass}">${leagueLogo} ${safeLeague}</span>
@@ -963,59 +992,65 @@
             loadDashboard();
         }
 
-        // Check URL for auth callback (magic link)
-        const urlParams = new URLSearchParams(window.location.search);
-        const accessToken = urlParams.get('access_token');
-        const refreshToken = urlParams.get('refresh_token');
-        
-        if (accessToken && refreshToken) {
-            // User clicked magic link — exchange tokens for an httpOnly session cookie.
-            fetch(`${API_BASE}/api/auth/callback`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'access_token': accessToken,
-                    'refresh_token': refreshToken
+        // Single init path: handle magic-link callback OR validate existing session, then render.
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const accessToken = urlParams.get('access_token');
+            const refreshToken = urlParams.get('refresh_token');
+
+            if (accessToken && refreshToken) {
+                try {
+                    const r = await fetch(`${API_BASE}/api/auth/callback`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'access_token': accessToken, 'refresh_token': refreshToken }
+                    });
+                    if (!r.ok) throw new Error('callback failed');
+                    const data = await r.json();
+                    auth.setUser({ id: data.user_id, email: data.email });
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } catch (err) {
+                    console.error('Auth callback failed:', err);
                 }
-            })
-            .then(r => {
-                if (!r.ok) throw new Error('callback failed');
-                return r.json();
-            })
-            .then(data => {
-                auth.setUser({ id: data.user_id, email: data.email });
-                // Clean URL so the tokens don't linger in browser history.
-                window.history.replaceState({}, document.title, window.location.pathname);
-                updateAuthUI();
-                loadDashboard();
-            })
-            .catch(err => {
-                console.error('Auth callback failed:', err);
-            });
+            } else {
+                // Validate the session cookie against the server on every page load.
+                await auth.validateSession();
+            }
+
+            updateAuthUI();
+            loadDashboard();
         }
 
-        // Initialize auth UI
-        updateAuthUI();
-
-        // Auto-refresh every 30 seconds to catch new teams
+        // Auto-refresh when new teams are added in settings
         let lastTeamCount = 0;
         async function checkForNewTeams() {
             const settings = await syncSettingsFromServer();
             const currentCount = (settings.teams || []).length;
-            
             if (currentCount !== lastTeamCount && lastTeamCount > 0) {
-                // Team count changed - reload dashboard
-                console.log('New teams detected - refreshing...');
                 loadDashboard();
             }
             lastTeamCount = currentCount;
         }
-        
-        // Check every 10 seconds
         setInterval(checkForNewTeams, 10000);
-        
-        // Load on page load
-        loadDashboard();
+
+        // Refresh the date in the subtitle at midnight without reloading the whole dashboard.
+        function scheduleSubtitleRefresh() {
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setHours(24, 0, 0, 0);
+            setTimeout(() => {
+                const el = document.getElementById('subtitle');
+                if (el) {
+                    el.textContent = new Date().toLocaleDateString('en-US', {
+                        weekday: 'long', month: 'long', day: 'numeric'
+                    });
+                }
+                scheduleSubtitleRefresh();
+            }, midnight - now);
+        }
+        scheduleSubtitleRefresh();
+
+        init();
 
         // Pull to refresh (basic version)
         let touchStartY = 0;
