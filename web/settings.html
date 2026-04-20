@@ -800,9 +800,10 @@
                     status.textContent = 'Refresh running — checking status…';
                     const started = Date.now();
                     const poll = setInterval(async () => {
-                        if (Date.now() - started > 120000) {
+                        if (Date.now() - started > 180000) {
                             clearInterval(poll);
-                            status.textContent = 'Refresh is taking a while — check back soon.';
+                            status.style.color = '#ff453a';
+                            status.textContent = '⚠️ Timed out — try again.';
                             btn.disabled = false;
                             btn.textContent = '↻ Refresh All Data';
                             return;
@@ -810,19 +811,22 @@
                         try {
                             const s = await fetch(`${API_BASE}/api/refresh/status`, { credentials: 'include' });
                             const sd = await s.json();
-                            if (sd.status === 'success') {
+                            if (sd.status === 'running') {
+                                status.textContent = sd.message || 'Refreshing…';
+                            } else if (sd.status === 'success') {
                                 clearInterval(poll);
                                 status.style.color = '#30d158';
-                                status.textContent = '✓ Data refreshed! Head back to the dashboard.';
+                                status.textContent = '✓ ' + (sd.message || 'Done!') + ' Head back to the dashboard.';
                                 btn.disabled = false;
                                 btn.textContent = '↻ Refresh All Data';
                             } else if (sd.status === 'error') {
                                 clearInterval(poll);
                                 status.style.color = '#ff453a';
-                                status.textContent = '⚠️ Refresh failed: ' + (sd.message || 'unknown error');
+                                status.textContent = '⚠️ ' + (sd.message || 'Unknown error');
                                 btn.disabled = false;
                                 btn.textContent = '↻ Refresh All Data';
                             }
+                            // 'idle' = status file not written yet, keep polling
                         } catch (_) {}
                     }, 3000);
                 } else {
