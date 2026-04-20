@@ -505,6 +505,7 @@ def _run_refresh_inprocess(refresh_id: str) -> None:
             sys.path.insert(0, scripts_dir)
 
         from fetch_all import load_teams, fetch_nhl_team, fetch_espn_team, fetch_whl_team
+        from league_discovery import fetch_mlb_schedule, fetch_espn_schedule
 
         teams = load_teams()
         all_results: Dict = {}
@@ -517,10 +518,18 @@ def _run_refresh_inprocess(refresh_id: str) -> None:
             except Exception as e:
                 print(f"NHL fetch failed for {team['name']}: {e}")
 
-        for league in ("MLB", "NFL", "NBA", "CFL"):
+        for team in teams.get("mlb", []):
+            try:
+                games = fetch_mlb_schedule(team["name"])
+                all_results[team["name"]] = {"abbrev": team["abbrev"], "league": "MLB",
+                                             "games": sorted(games, key=lambda x: x.get("date", ""))}
+            except Exception as e:
+                print(f"MLB fetch failed for {team['name']}: {e}")
+
+        for league in ("NFL", "NBA", "CFL"):
             for team in teams.get(league.lower(), []):
                 try:
-                    games = fetch_espn_team(league, team["abbrev"], team["name"])
+                    games = fetch_espn_schedule(team["name"], team["abbrev"], league)
                     all_results[team["name"]] = {"abbrev": team["abbrev"], "league": league,
                                                  "games": sorted(games, key=lambda x: x.get("date", ""))}
                 except Exception as e:
