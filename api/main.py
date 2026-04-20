@@ -173,10 +173,22 @@ def fetch_live_team_data(team_name: str):
     return detection, games, news
 
 
+_COMPLETED_STATUSES = {"off", "final", "full time", "ft", "completed", "complete", "game over", "f/ot", "f/so"}
+_UPCOMING_STATUSES = {"fut", "scheduled", "pre", "preview", "status_scheduled", "tbd"}
+
 def format_team_payload(team_name: str, league: str, abbrev: str, games: List[Dict], news: List[Dict]):
     games_sorted = sorted(games, key=lambda x: x.get("date", ""))
-    completed = [g for g in games_sorted if g.get("status") in ["OFF", "FINAL", "Final", "Full Time"]]
-    upcoming = [g for g in games_sorted if g.get("status") in ["FUT", "SCHEDULED", "Scheduled"]]
+
+    def _is_completed(g):
+        s = (g.get("status") or "").lower().strip()
+        return s in _COMPLETED_STATUSES or s.startswith("final")
+
+    def _is_upcoming(g):
+        s = (g.get("status") or "").lower().strip()
+        return s in _UPCOMING_STATUSES
+
+    completed = [g for g in games_sorted if _is_completed(g)]
+    upcoming = [g for g in games_sorted if _is_upcoming(g)]
 
     return {
         "name": team_name,

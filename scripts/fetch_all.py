@@ -19,6 +19,20 @@ TEAMS_CONFIG = Path(__file__).parent.parent / "config" / "teams.json"
 NHL_API = "https://api-web.nhle.com/v1"
 ESPN_API = "https://site.api.espn.com/apis/site/v2/sports"
 
+NHL_ABBREV_TO_NAME = {
+    "ANA": "Anaheim Ducks", "BOS": "Boston Bruins", "BUF": "Buffalo Sabres",
+    "CGY": "Calgary Flames", "CAR": "Carolina Hurricanes", "CHI": "Chicago Blackhawks",
+    "COL": "Colorado Avalanche", "CBJ": "Columbus Blue Jackets", "DAL": "Dallas Stars",
+    "DET": "Detroit Red Wings", "EDM": "Edmonton Oilers", "FLA": "Florida Panthers",
+    "LAK": "Los Angeles Kings", "MIN": "Minnesota Wild", "MTL": "Montreal Canadiens",
+    "NSH": "Nashville Predators", "NJD": "New Jersey Devils", "NYI": "New York Islanders",
+    "NYR": "New York Rangers", "OTT": "Ottawa Senators", "PHI": "Philadelphia Flyers",
+    "PIT": "Pittsburgh Penguins", "SJS": "San Jose Sharks", "SEA": "Seattle Kraken",
+    "STL": "St. Louis Blues", "TBL": "Tampa Bay Lightning", "TOR": "Toronto Maple Leafs",
+    "UTA": "Utah Hockey Club", "VAN": "Vancouver Canucks", "VGK": "Vegas Golden Knights",
+    "WSH": "Washington Capitals", "WPG": "Winnipeg Jets",
+}
+
 # League mappings
 LEAGUE_MAP = {
     "MLB": "baseball/mlb",
@@ -60,7 +74,8 @@ def fetch_nhl_team(abbrev, team_name):
                     
                     if abbrev in [home_abbrev, away_abbrev]:
                         is_home = abbrev == home_abbrev
-                        opponent = away_abbrev if is_home else home_abbrev
+                        opp_abbrev_raw = away_abbrev if is_home else home_abbrev
+                        opponent = NHL_ABBREV_TO_NAME.get(opp_abbrev_raw, opp_abbrev_raw)
                         
                         home_score = home.get("score", 0)
                         away_score = away.get("score", 0)
@@ -123,13 +138,7 @@ def fetch_espn_team(league, team_abbrev, team_name):
             print(f"Could not find team ID for {team_abbrev}")
             return []
         
-        # Fetch team schedule (last 30 days + next 60 days)
-        from datetime import datetime, timedelta
-        today = datetime.now()
-        start_date = (today - timedelta(days=30)).strftime("%Y%m%d")
-        end_date = (today + timedelta(days=60)).strftime("%Y%m%d")
-        
-        schedule_url = f"{ESPN_API}/{league_path}/teams/{team_id}/schedule?dates={start_date}-{end_date}"
+        schedule_url = f"{ESPN_API}/{league_path}/teams/{team_id}/schedule"
         response = requests.get(schedule_url, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -150,7 +159,9 @@ def fetch_espn_team(league, team_abbrev, team_name):
                 
                 if team_abbrev in [home_abbrev, away_abbrev]:
                     is_home = team_abbrev == home_abbrev
-                    opponent = away_abbrev if is_home else home_abbrev
+                    opp_team = away_team if is_home else home_team
+                    opponent = (opp_team.get("team", {}).get("displayName")
+                                or opp_team.get("team", {}).get("abbreviation", ""))
                     
                     # Safely parse scores (might be int, str, or dict)
                     def safe_int(val, default=0):
