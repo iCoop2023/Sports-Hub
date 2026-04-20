@@ -59,7 +59,7 @@
             flex-shrink: 0;
         }
 
-        .refresh-btn, .settings-btn, .login-btn {
+        .settings-btn, .login-btn {
             background: #0a84ff;
             border: none;
             color: white;
@@ -93,13 +93,8 @@
             gap: 8px;
         }
 
-        .refresh-btn:active, .settings-btn:active {
+        .settings-btn:active {
             transform: scale(0.95);
-        }
-
-        .refresh-btn.loading {
-            opacity: 0.6;
-            pointer-events: none;
         }
 
         .container {
@@ -479,7 +474,6 @@
             <div class="header-buttons">
                 <div id="authStatus"></div>
                 <a href="settings.html" class="settings-btn" title="Settings">⚙️</a>
-                <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
             </div>
         </div>
         <p class="subtitle" id="subtitle">Loading...</p>
@@ -791,10 +785,6 @@
 
         async function loadDashboard() {
             const container = document.getElementById('container');
-            const refreshBtn = document.querySelector('.refresh-btn');
-            
-            refreshBtn.classList.add('loading');
-            refreshBtn.textContent = '↻ Loading...';
 
             try {
                 const settings = await syncSettingsFromServer();
@@ -822,8 +812,6 @@
                                 </div>
                             </div>
                         `;
-                        refreshBtn.classList.remove('loading');
-                        refreshBtn.textContent = '↻ Refresh';
                         return;
                     }
                     
@@ -933,8 +921,6 @@
                     </div>
                 `;
             } finally {
-                refreshBtn.classList.remove('loading');
-                refreshBtn.textContent = '↻ Refresh';
             }
         }
 
