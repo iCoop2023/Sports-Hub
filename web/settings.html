@@ -286,14 +286,18 @@
         }
 
         @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to   { opacity: 0; transform: translateY(-10px); }
+        }
+
+        .team-item.drag-over {
+            background: rgba(10, 132, 255, 0.12);
+            border-top: 2px solid #0a84ff;
         }
     </style>
     <script src="add-team-universal.js"></script>
@@ -564,20 +568,28 @@
                     draggedElement = null;
                 });
                 
+                item.addEventListener('dragenter', e => {
+                    if (item !== draggedElement) item.classList.add('drag-over');
+                });
+
+                item.addEventListener('dragleave', e => {
+                    item.classList.remove('drag-over');
+                });
+
                 item.addEventListener('dragover', e => {
                     e.preventDefault();
                     const afterElement = getDragAfterElement(e.clientY);
                     const teamList = document.getElementById('teamList');
-                    
                     if (afterElement == null) {
                         teamList.appendChild(draggedElement);
                     } else {
                         teamList.insertBefore(draggedElement, afterElement);
                     }
                 });
-                
+
                 item.addEventListener('drop', e => {
                     e.preventDefault();
+                    item.classList.remove('drag-over');
                     updateTeamOrder();
                 });
             });
@@ -706,12 +718,14 @@
         }
 
         function showSuccess(message) {
-            const successMsg = document.getElementById('successMessage');
-            successMsg.textContent = message;
-            successMsg.style.display = 'block';
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.style.animation = 'slideDown 0.3s ease-out';
+            el.style.display = 'block';
             setTimeout(() => {
-                successMsg.style.display = 'none';
-            }, 3000);
+                el.style.animation = 'fadeOut 0.3s ease-out forwards';
+                setTimeout(() => { el.style.display = 'none'; el.style.animation = ''; }, 300);
+            }, 2700);
         }
 
         function showError(message) {
