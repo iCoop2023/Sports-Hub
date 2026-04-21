@@ -613,23 +613,26 @@ def get_result(game: Dict) -> str:
 
 
 def get_espn_result(comp: Dict, is_home: bool) -> str:
-    """Determine W/L from ESPN game."""
+    """Determine W/L/T from ESPN game."""
     if comp["status"]["type"]["completed"]:
         home = comp["competitors"][0] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][1]
         away = comp["competitors"][1] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][0]
-        
-        # Handle both dict and int score formats
+
         home_score = home.get("score", 0)
         away_score = away.get("score", 0)
         if isinstance(home_score, dict):
             home_score = float(home_score.get("value", 0))
         if isinstance(away_score, dict):
             away_score = float(away_score.get("value", 0))
-        
-        if is_home:
-            return "W" if home_score > away_score else "L"
+
+        my_score = home_score if is_home else away_score
+        opp_score = away_score if is_home else home_score
+        if my_score > opp_score:
+            return "W"
+        elif my_score < opp_score:
+            return "L"
         else:
-            return "W" if away_score > home_score else "L"
+            return "T"
     return "SCHEDULED"
 
 
