@@ -346,34 +346,88 @@ def fetch_team_schedule(team_name: str) -> Optional[List[Dict]]:
 
 
 def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
-    """Fetch NHL schedule."""
-    url = f"https://api-web.nhle.com/v1/club-schedule-season/{abbrev}/now"
+    """Fetch NHL schedule.
+
+    Primary: club-schedule-season endpoint (full season + playoffs in one call).
+    Fallback: daily scoreboard across ±14 days — reliable during playoffs and
+    for eliminated teams whose season endpoint may return an empty games list.
+    """
+    nhl_abbrev_to_name = {v: k for k, v in LEAGUE_APIS["NHL"]["teams"].items()}
+
+    def _parse_season_game(game):
+        opp_abbrev = game.get("opponentAbbrev", "")
+        return {
+            "id": game["id"],
+            "date": game["gameDate"][:10],
+            "opponent": nhl_abbrev_to_name.get(opp_abbrev, opp_abbrev),
+            "team_score": game.get("teamScore", 0),
+            "opponent_score": game.get("opponentScore", 0),
+            "status": game.get("gameState", ""),
+            "is_home": game.get("homeRoadFlag", "") == "H",
+            "result": get_result(game),
+            "league": "NHL",
+        }
+
+    # --- Primary: season endpoint ---
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(
+            f"https://api-web.nhle.com/v1/club-schedule-season/{abbrev}/now",
+            timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
-        nhl_abbrev_to_name = {v: k for k, v in LEAGUE_APIS["NHL"]["teams"].items()}
-
-        games = []
-        for game in data.get("games", []):
-            opp_abbrev = game.get("opponentAbbrev", "")
-            opponent_name = nhl_abbrev_to_name.get(opp_abbrev, opp_abbrev)
-            games.append({
-                "id": game["id"],
-                "date": game["gameDate"][:10],
-                "opponent": opponent_name,
-                "team_score": game.get("teamScore", 0),
-                "opponent_score": game.get("opponentScore", 0),
-                "status": game.get("gameState", ""),
-                "is_home": game.get("homeRoadFlag", "") == "H",
-                "result": get_result(game),
-                "league": "NHL"
-            })
-        return games
+        raw = data.get("games", [])
+        if raw:
+            return [_parse_season_game(g) for g in raw]
+        print(f"NHL season endpoint returned 0 games for {abbrev}, trying scoreboard fallback")
     except Exception as e:
-        print(f"NHL fetch failed for {abbrev}: {e}")
-        return []
+        print(f"NHL season endpoint failed for {abbrev}: {e}")
+
+    # --- Fallback: daily scoreboard ±14 days ---
+    games: dict = {}
+    today = datetime.now()
+    for offset in range(-14, 15):
+        date_str = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
+        try:
+            resp = requests.get(
+                f"https://api-web.nhle.com/v1/scoreboard/{date_str}", timeout=5)
+            resp.raise_for_status()
+            data = resp.json()
+            for day in data.get("gamesByDate", []):
+                for game in day.get("games", []):
+                    home = game.get("homeTeam", {})
+                    away = game.get("awayTeam", {})
+                    h_abbrev = home.get("abbrev", "")
+                    a_abbrev = away.get("abbrev", "")
+                    if abbrev not in (h_abbrev, a_abbrev):
+                        continue
+                    is_home = abbrev == h_abbrev
+                    opp_abbrev = a_abbrev if is_home else h_abbrev
+                    status = game.get("gameState", "")
+                    h_score = home.get("score", 0)
+                    a_score = away.get("score", 0)
+                    t_score = h_score if is_home else a_score
+                    o_score = a_score if is_home else h_score
+                    if status in ("FINAL", "OFF"):
+                        result = "W" if t_score > o_score else ("L" if t_score < o_score else "T")
+                    elif status == "LIVE":
+                        result = "LIVE"
+                    else:
+                        result = "SCHEDULED"
+                    gid = game.get("id")
+                    games[gid] = {
+                        "id": gid,
+                        "date": game.get("gameDate", date_str)[:10],
+                        "opponent": nhl_abbrev_to_name.get(opp_abbrev, opp_abbrev),
+                        "team_score": t_score,
+                        "opponent_score": o_score,
+                        "status": status,
+                        "is_home": is_home,
+                        "result": result,
+                        "league": "NHL",
+                    }
+        except Exception:
+            continue
+    return list(games.values())
 
 
 def fetch_mlb_schedule(team_name: str) -> List[Dict]:

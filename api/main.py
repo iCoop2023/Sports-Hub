@@ -191,7 +191,10 @@ def fetch_live_team_data(team_name: str):
 
 
 _COMPLETED_STATUSES = {"off", "final", "full time", "ft", "completed", "complete", "game over", "f/ot", "f/so"}
-_UPCOMING_STATUSES = {"fut", "scheduled", "pre", "preview", "status_scheduled", "tbd"}
+# "crit" = NHL playoff critical game (upcoming, not yet played)
+_UPCOMING_STATUSES = {"fut", "scheduled", "pre", "preview", "status_scheduled", "tbd", "crit"}
+# Live game statuses – shown in the recent section with current score
+_LIVE_STATUSES = {"live", "in progress", "in_progress", "halftime", "end of period", "end of half", "intermission"}
 
 def format_team_payload(team_name: str, league: str, abbrev: str, games: List[Dict], news: List[Dict]):
     games_sorted = sorted(games, key=lambda x: x.get("date", ""))
@@ -200,18 +203,27 @@ def format_team_payload(team_name: str, league: str, abbrev: str, games: List[Di
         s = (g.get("status") or "").lower().strip()
         return s in _COMPLETED_STATUSES or s.startswith("final")
 
+    def _is_live(g):
+        s = (g.get("status") or "").lower().strip()
+        r = (g.get("result") or "").upper()
+        return r == "LIVE" or s in _LIVE_STATUSES
+
     def _is_upcoming(g):
         s = (g.get("status") or "").lower().strip()
         return s in _UPCOMING_STATUSES
 
     completed = [g for g in games_sorted if _is_completed(g)]
+    live = [g for g in games_sorted if _is_live(g)]
     upcoming = [g for g in games_sorted if _is_upcoming(g)]
+
+    # Live games surface first in recent (most timely thing happening right now)
+    recent_all = sorted(live + completed, key=lambda x: x.get("date", ""))
 
     return {
         "name": team_name,
         "league": league,
         "abbrev": abbrev,
-        "recent_games": completed[-5:],
+        "recent_games": recent_all[-5:],
         "upcoming_games": upcoming[:5],
         "news": news,
         "record": {
@@ -449,35 +461,48 @@ async def get_teams():
     
     return {"teams": teams}
 
+def _cache_is_stale(games: List[Dict]) -> bool:
+    """True if any scheduled game in the cache has a date that's already passed."""
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    scheduled = {"fut", "scheduled", "crit", "pre", "preview"}
+    return any(
+        g.get("date", "9999") < today and
+        (g.get("status") or "").lower() in scheduled
+        for g in games
+    )
+
+
 @app.get("/api/team/{team_name}")
 async def get_team(team_name: str):
     """Get detailed data for a specific team."""
     data = load_cache()
     team_info = data.get("teams", {}).get(team_name)
+    cached_games = team_info.get("games", []) if team_info else []
 
-    # Use cached games only if they actually exist (seed entries have games=[])
-    if team_info and team_info.get("games"):
+    # Use cache only when it has games AND none of the scheduled entries are past
+    if cached_games and not _cache_is_stale(cached_games):
         league = team_info.get("league", "Unknown")
         news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
         return format_team_payload(
             team_name,
             league,
             team_info.get("abbrev", ""),
-            team_info.get("games", []),
+            cached_games,
             news_data
         )
 
-    # Not in cache or games empty – fetch live
+    # Cache missing, empty, or stale — fetch live
     try:
         detection, games, news = fetch_live_team_data(team_name)
-    except HTTPException:
+    except Exception as exc:
         if not team_info:
-            raise
-        # Team is in seed (known league) but live fetch failed; return gracefully
+            raise HTTPException(status_code=404, detail=str(exc))
+        # Live fetch failed — serve stale cache rather than an empty response
         league = team_info.get("league", "Unknown")
-        return format_team_payload(team_name, league, team_info.get("abbrev", ""), [], [])
+        news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
+        return format_team_payload(team_name, league, team_info.get("abbrev", ""), cached_games, news_data)
 
-    # Cache the result so the next request within this instance is instant
+    # Write result back to cache so subsequent requests within this instance are instant
     if games:
         try:
             cache = load_cache()

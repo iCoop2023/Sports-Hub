@@ -217,6 +217,17 @@
             color: #fff;
         }
 
+        .result-badge.live {
+            background: #ff9f0a;
+            color: #000;
+            animation: livepulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes livepulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+        }
+
         .result-badge.upcoming {
             border: 2px solid #98989d;
             color: #98989d;
@@ -717,7 +728,7 @@
             // Recent games
             if (recentGames.length > 0) {
                 recentGames.forEach(game => {
-                    const resultClass = game.result === 'W' ? 'win' : game.result === 'T' ? 'tie' : 'loss';
+                    const resultClass = game.result === 'W' ? 'win' : game.result === 'T' ? 'tie' : game.result === 'LIVE' ? 'live' : 'loss';
                     const location = game.is_home ? '🏠' : '🛫';
                     const teamScore = Number.isFinite(+game.team_score) ? +game.team_score : '';
                     const oppScore = Number.isFinite(+game.opponent_score) ? +game.opponent_score : '';
