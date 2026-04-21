@@ -462,11 +462,11 @@ async def get_teams():
     return {"teams": teams}
 
 def _cache_is_stale(games: List[Dict]) -> bool:
-    """True if any scheduled game in the cache has a date that's already passed."""
+    """True if any scheduled game is today or in the past (scores may now exist)."""
     today = datetime.utcnow().strftime("%Y-%m-%d")
     scheduled = {"fut", "scheduled", "crit", "pre", "preview"}
     return any(
-        g.get("date", "9999") < today and
+        g.get("date", "9999") <= today and          # <= catches today's games too
         (g.get("status") or "").lower() in scheduled
         for g in games
     )
