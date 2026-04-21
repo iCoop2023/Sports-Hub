@@ -6,47 +6,11 @@
       "use": "@vercel/python"
     },
     {
-      "src": "web/**",
-      "use": "@vercel/static"
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
     }
   ],
   "routes": [
-    {
-      "src": "/",
-      "dest": "/web/index.html"
-    },
-    {
-      "src": "/settings.html",
-      "dest": "/web/settings.html"
-    },
-    {
-      "src": "/league-picker.html",
-      "dest": "/web/league-picker.html"
-    },
-    {
-      "src": "/team-database.js",
-      "dest": "/web/team-database.js"
-    },
-    {
-      "src": "/add-team-universal.js",
-      "dest": "/web/add-team-universal.js"
-    },
-    {
-      "src": "/team-metadata.js",
-      "dest": "/web/team-metadata.js"
-    },
-    {
-      "src": "/quick-fix-news.js",
-      "dest": "/web/quick-fix-news.js"
-    },
-    {
-      "src": "/team-logos.js",
-      "dest": "/web/team-logos.js"
-    },
-    {
-      "src": "/auth.js",
-      "dest": "/web/auth.js"
-    },
     {
       "src": "/api/(.*)",
       "dest": "/api/main.py"

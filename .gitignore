@@ -13,6 +13,11 @@ data/cache/
 !data/cache/all_teams.json
 sports_dashboard.png
 
+# Frontend build artifacts
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+
 # Editor
 .vscode/
 .idea/
