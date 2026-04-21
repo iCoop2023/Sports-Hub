@@ -382,14 +382,14 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
     except Exception as e:
         print(f"NHL season endpoint failed for {abbrev}: {e}")
 
-    # --- Fallback: daily scoreboard ±14 days ---
+    # --- Fallback: daily scoreboard ±7 days ---
     games: dict = {}
     today = datetime.now()
-    for offset in range(-14, 15):
+    for offset in range(-7, 8):
         date_str = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
         try:
             resp = requests.get(
-                f"https://api-web.nhle.com/v1/scoreboard/{date_str}", timeout=5)
+                f"https://api-web.nhle.com/v1/scoreboard/{date_str}", timeout=2)
             resp.raise_for_status()
             data = resp.json()
             for day in data.get("gamesByDate", []):
