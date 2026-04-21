@@ -502,6 +502,12 @@ async def get_team(team_name: str):
         news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
         return format_team_payload(team_name, league, team_info.get("abbrev", ""), cached_games, news_data)
 
+    # Live fetch returned no games — fall back to stale cache rather than "Offseason"
+    if not games and cached_games:
+        league = detection.get("league", team_info.get("league", "Unknown"))
+        news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
+        return format_team_payload(team_name, league, team_info.get("abbrev", ""), cached_games, news_data)
+
     # Write result back to cache so subsequent requests within this instance are instant
     if games:
         try:
