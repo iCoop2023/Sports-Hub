@@ -291,8 +291,9 @@
 
     <script src="team-database.js"></script>
     <script src="team-metadata.js"></script>
-    <script src="add-team-universal.js"></script>
     <script>
+        window.API_BASE = window.API_BASE || window.location.origin;
+        const API_BASE = window.API_BASE;
         let currentLeague = null;
         let currentLeagueName = null;
 
@@ -324,13 +325,33 @@
             loadTeams(leagueCode);
         }
 
+        function getLeagueName(leagueCode) {
+            const names = {
+                NHL: 'National Hockey League',
+                WHL: 'Western Hockey League',
+                OHL: 'Ontario Hockey League',
+                QMJHL: 'Quebec Major Junior Hockey League',
+                BCHL: 'British Columbia Hockey League',
+                MLB: 'Major League Baseball',
+                NFL: 'National Football League',
+                CFL: 'Canadian Football League',
+                NBA: 'National Basketball Association',
+                CEBL: 'Canadian Elite Basketball League',
+                'Premier League': 'English Premier League',
+                'La Liga': 'Spanish La Liga',
+                Bundesliga: 'German Bundesliga',
+                MLS: 'Major League Soccer'
+            };
+            return names[leagueCode] || leagueCode;
+        }
+
         function loadTeams(leagueCode) {
             const teams = getTeamsByLeague(leagueCode);
             const teamList = document.getElementById('teamList');
             
             if (teams && teams.length > 0) {
                 teamList.innerHTML = teams.map(team => `
-                    <div class="team-item" onclick="addTeam('${team}', '${leagueCode}')">
+                    <div class="team-item" onclick='addTeam(this, ${JSON.stringify(team)}, ${JSON.stringify(leagueCode)})'>
                         <div class="team-name">${team}</div>
                     </div>
                 `).join('');
@@ -349,9 +370,7 @@
             });
         }
 
-        async function addTeam(teamName, leagueCode) {
-            const API_BASE = 'https://sports-hub-sepia.vercel.app';
-            
+        async function addTeam(teamEl, teamName, leagueCode) {
             // Get current settings
             const settings = JSON.parse(localStorage.getItem('sportsHubSettings') || '{}');
             const teams = settings.teams || [];
@@ -363,10 +382,10 @@
             }
             
             // Show loading state
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = 'Adding...';
-            btn.disabled = true;
+            const originalHTML = teamEl.innerHTML;
+            teamEl.innerHTML = `<div class="team-name">Adding ${teamName}…</div>`;
+            teamEl.style.pointerEvents = 'none';
+            teamEl.style.opacity = '0.7';
             
             try {
                 // Fetch team data from API (schedule + news)
@@ -397,18 +416,26 @@
                     localStorage.setItem('sportsHubSettingsDirty', 'true');
                     
                     // Show success and redirect
-                    btn.textContent = `✓ Added (${result.games_found || 0} games, ${result.news_found || 0} news)`;
-                    setTimeout(() => window.location.href = '/', 1000);
+                    teamEl.innerHTML = `<div class="team-name">✓ Added ${teamName}</div>`;
+                    setTimeout(() => window.location.href = '/', 800);
                 } else {
                     throw new Error(result.message || 'Failed to fetch team data');
                 }
             } catch (error) {
                 console.error('Failed to add team:', error);
                 alert('Failed to add team. Please try again.');
-                btn.textContent = originalText;
-                btn.disabled = false;
+                teamEl.innerHTML = originalHTML;
+                teamEl.style.pointerEvents = '';
+                teamEl.style.opacity = '';
             }
         }
+
+        (function openLeagueFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const leagueFromQuery = params.get('league');
+            if (!leagueFromQuery) return;
+            selectLeague(leagueFromQuery, getLeagueName(leagueFromQuery));
+        })();
     </script>
 </body>
 </html>
