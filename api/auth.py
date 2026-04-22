@@ -90,8 +90,9 @@ def resolve_token(
     return None
 
 
-class LoginRequest(BaseModel):
+class AuthRequest(BaseModel):
     email: EmailStr
+    password: str
 
 
 class SessionResponse(BaseModel):
@@ -99,56 +100,67 @@ class SessionResponse(BaseModel):
     email: str
 
 
-@router.post("/login")
+@router.post("/register", response_model=SessionResponse)
 @limiter.limit("5/minute;20/hour")
-async def send_magic_link(request: Request, body: LoginRequest):
-    """Send magic link to user's email.
-
-    Rate-limited per IP: 5 per minute / 20 per hour. Prevents an attacker
-    from spamming magic links to arbitrary email addresses.
-    """
+async def register_with_password(response: Response, request: Request, body: AuthRequest):
+    """Create account with email + password and set session cookies."""
     if not SUPABASE_ENABLED:
         raise HTTPException(status_code=503, detail="Auth not configured")
 
+    if len(body.password or "") < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
     try:
         supabase = get_supabase_client()
-        supabase.auth.sign_in_with_otp({
+        result = supabase.auth.sign_up({
             "email": body.email,
-            "options": {
-                "email_redirect_to": os.getenv("APP_URL", "https://sports-hub-sepia.vercel.app")
-            }
+            "password": body.password,
         })
-        return {
-            "status": "success",
-            "message": f"Magic link sent to {body.email}. Check your inbox!"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send magic link: {str(e)}")
+        session = result.session
+        user = result.user
 
+        if not session or not user:
+            raise HTTPException(
+                status_code=400,
+                detail="Registration created but no session returned. Disable email confirmation in Supabase Auth settings for instant sign-in.",
+            )
 
-@router.post("/callback", response_model=SessionResponse)
-async def auth_callback(
-    response: Response,
-    access_token: str = Header(...),
-    refresh_token: str = Header(...),
-):
-    """Exchange Supabase tokens for a session cookie."""
-    if not SUPABASE_ENABLED:
-        raise HTTPException(status_code=503, detail="Auth not configured")
-
-    try:
-        supabase = get_supabase_client()
-        session = supabase.auth.set_session(access_token, refresh_token)
-        user = session.user
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid session")
-
-        _set_session_cookies(response, access_token, refresh_token)
+        _set_session_cookies(response, session.access_token, session.refresh_token)
         return SessionResponse(user_id=user.id, email=user.email)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Auth failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+
+
+@router.post("/login", response_model=SessionResponse)
+@limiter.limit("10/minute;40/hour")
+async def login_with_password(response: Response, request: Request, body: AuthRequest):
+    """Sign in with email + password and set session cookies."""
+    if not SUPABASE_ENABLED:
+        raise HTTPException(status_code=503, detail="Auth not configured")
+
+    try:
+        supabase = get_supabase_client()
+        result = supabase.auth.sign_in_with_password({
+            "email": body.email,
+            "password": body.password,
+        })
+        session = result.session
+        user = result.user
+
+        if not session or not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        _set_session_cookies(response, session.access_token, session.refresh_token)
+        return SessionResponse(user_id=user.id, email=user.email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        msg = str(e).lower()
+        if "invalid login credentials" in msg:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail=f"Login failed: {str(e)}")
 
 
 @router.get("/session")

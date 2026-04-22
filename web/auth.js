@@ -3,7 +3,7 @@
 // Session tokens live in httpOnly cookies set by the API, so JS can't read
 // or exfiltrate them. This file only caches non-sensitive user info
 // (id, email) in localStorage for rendering the signed-in UI.
-const API_BASE_URL = window.API_BASE || 'https://sports-hub-sepia.vercel.app';
+const API_BASE_URL = window.API_BASE || window.location.origin;
 
 class AuthManager {
     constructor() {
@@ -18,16 +18,33 @@ class AuthManager {
         return this.user;
     }
 
-    async sendMagicLink(email) {
+    async login(email, password) {
         const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email, password })
         });
 
         if (!response.ok) {
-            throw new Error('Failed to send magic link');
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.detail || 'Login failed');
+        }
+
+        return await response.json();
+    }
+
+    async register(email, password) {
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email, password })
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.detail || 'Registration failed');
         }
 
         return await response.json();
