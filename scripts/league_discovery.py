@@ -436,7 +436,6 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
             continue
     return list(games.values())
 
-
 def fetch_mlb_schedule(team_name: str) -> List[Dict]:
     """Fetch MLB schedule from the official MLB Stats API (free, no auth)."""
     team_id = MLB_TEAM_IDS.get(team_name)
@@ -574,6 +573,29 @@ def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
     if not numeric_id:
         print(f"ESPN: no numeric ID found for {team_name} ({league})")
         return []
+    sport_path, id_map = entry
+
+    numeric_id = id_map.get(team_name)
+    if not numeric_id:
+        # Last-resort live lookup
+        try:
+            r = requests.get(
+                f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/teams",
+                timeout=10)
+            r.raise_for_status()
+            for t in (r.json().get("sports", [{}])[0]
+                      .get("leagues", [{}])[0].get("teams", [])):
+                if t.get("team", {}).get("abbreviation", "").upper() == abbrev.upper():
+                    numeric_id = t["team"]["id"]
+                    break
+        except Exception as e:
+            print(f"ESPN ID lookup failed for {team_name}: {e}")
+
+    if not numeric_id:
+        print(f"ESPN: no numeric ID found for {team_name} ({league})")
+        return []
+
+    return _fetch_espn_by_id(team_name, numeric_id, sport_path, league, abbrev)
 
     return _fetch_espn_by_id(team_name, numeric_id, sport_path, league, abbrev)
 
