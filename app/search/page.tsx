@@ -48,17 +48,16 @@ export default function ManagePage() {
       .slice(0, 50)
   }, [query, allTeams])
 
-  // Teams not yet added, grouped by league for browsing
+  // All teams grouped by league — show added ones as "✓ Added" so the action is confirmed in place
   const browseGroups = useMemo(() => {
     if (query.trim()) return null
-    const notAdded = allTeams.filter((t) => !myTeamNames.has(t.name))
     const map = new Map<string, TeamSummary[]>()
-    for (const t of notAdded) {
+    for (const t of allTeams) {
       if (!map.has(t.league)) map.set(t.league, [])
       map.get(t.league)!.push(t)
     }
     return map
-  }, [query, allTeams, myTeamNames])
+  }, [query, allTeams])
 
   async function saveTeams(updated: TeamSummary[]) {
     await fetch('/api/settings', {
@@ -231,10 +230,10 @@ export default function ManagePage() {
                             <TeamRow
                               key={team.name}
                               team={team}
-                              added={false}
+                              added={myTeamNames.has(team.name)}
                               adding={adding.has(team.name)}
                               onAdd={() => addTeam(team)}
-                              onRemove={() => {}}
+                              onRemove={() => removeTeam(team)}
                             />
                           ))}
                         </div>
@@ -246,9 +245,9 @@ export default function ManagePage() {
           </section>
         )}
 
-        {/* All caught up */}
-        {!loading && !query.trim() && myTeams.length > 0 && browseGroups?.size === 0 && (
-          <p className="text-center text-zinc-600 text-sm py-4">You&apos;re following every team!</p>
+        {/* Empty cache edge case */}
+        {!loading && !query.trim() && allTeams.length === 0 && (
+          <p className="text-center text-zinc-600 text-sm py-4">Could not load teams. Try again later.</p>
         )}
       </main>
     </div>
