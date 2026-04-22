@@ -212,6 +212,22 @@
             color: #000;
         }
 
+        .result-badge.tie {
+            background: #636366;
+            color: #fff;
+        }
+
+        .result-badge.live {
+            background: #ff9f0a;
+            color: #000;
+            animation: livepulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes livepulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+        }
+
         .result-badge.upcoming {
             border: 2px solid #98989d;
             color: #98989d;
@@ -631,7 +647,9 @@
         const UPCOMING_STATUSES = ['FUT', 'SCHEDULED', 'Scheduled'];
 
         function formatDate(dateStr) {
-            const date = new Date(dateStr);
+            // Append noon local time so "2026-04-11" isn't parsed as UTC midnight
+            // which would display as Apr 10 for all North American timezones.
+            const date = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
@@ -641,19 +659,19 @@
         }
 
         function renderStandingsBar(team) {
-            // Show record from completed games
-            const completedGames = team.games.filter(g => COMPLETED_STATUSES.includes(g.status));
+            // Use pre-categorized lists from the API — avoids status-string matching fragility
+            const completedGames = team.recent_games || [];
             const wins = completedGames.filter(g => g.result === 'W').length;
             const losses = completedGames.filter(g => g.result === 'L').length;
             const ties = completedGames.filter(g => g.result === 'T').length;
-            
+
             if (completedGames.length === 0) return '';
-            
+
             const record = ties > 0 ? `${wins}-${losses}-${ties}` : `${wins}-${losses}`;
             const winPct = ((wins / completedGames.length) * 100).toFixed(0);
-            
+
             // Get next opponent
-            const nextGame = team.games.find(g => UPCOMING_STATUSES.includes(g.status));
+            const nextGame = (team.upcoming_games || [])[0];
             let nextOppText = '';
             if (nextGame) {
                 const h2h = completedGames.filter(g => g.opponent === nextGame.opponent);
@@ -681,10 +699,9 @@
             const teamColor = getTeamColor ? getTeamColor(team.name) : '#0a84ff';
             const initials = team.name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('');
             
-            // Sort and filter games
-            const games = team.games.sort((a, b) => new Date(a.date) - new Date(b.date));
-            const recentGames = games.filter(g => COMPLETED_STATUSES.includes(g.status)).slice(-3);
-            const upcomingGames = games.filter(g => UPCOMING_STATUSES.includes(g.status)).slice(0, 3);
+            // Use pre-categorized lists from the API (already sorted by date)
+            const recentGames = (team.recent_games || []).slice(-3);
+            const upcomingGames = (team.upcoming_games || []).slice(0, 3);
             
             const safeName = escapeHtml(team.name);
             const safeLeague = escapeHtml(team.league);
@@ -711,7 +728,7 @@
             // Recent games
             if (recentGames.length > 0) {
                 recentGames.forEach(game => {
-                    const resultClass = game.result === 'W' ? 'win' : 'loss';
+                    const resultClass = game.result === 'W' ? 'win' : game.result === 'T' ? 'tie' : game.result === 'LIVE' ? 'live' : 'loss';
                     const location = game.is_home ? '🏠' : '🛫';
                     const teamScore = Number.isFinite(+game.team_score) ? +game.team_score : '';
                     const oppScore = Number.isFinite(+game.opponent_score) ? +game.opponent_score : '';
@@ -890,6 +907,8 @@
                             name: team.name,
                             league: team.league,
                             abbrev: team.abbrev || '',
+                            recent_games: team.recent_games || [],
+                            upcoming_games: team.upcoming_games || [],
                             games: [...(team.recent_games || []), ...(team.upcoming_games || [])],
                             news: team.news || [],
                             custom: team.custom || false

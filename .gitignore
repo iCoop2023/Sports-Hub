@@ -10,7 +10,12 @@ venv/
 
 # Local caches / generated data — don't commit
 data/cache/
+!data/cache/all_teams.json
 sports_dashboard.png
+
+# Next.js build artifacts
+.next/
+node_modules/
 
 # Editor
 .vscode/

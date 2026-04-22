@@ -191,7 +191,10 @@ def fetch_live_team_data(team_name: str):
 
 
 _COMPLETED_STATUSES = {"off", "final", "full time", "ft", "completed", "complete", "game over", "f/ot", "f/so"}
-_UPCOMING_STATUSES = {"fut", "scheduled", "pre", "preview", "status_scheduled", "tbd"}
+# "crit" = NHL playoff critical game (upcoming, not yet played)
+_UPCOMING_STATUSES = {"fut", "scheduled", "pre", "preview", "status_scheduled", "tbd", "crit"}
+# Live game statuses – shown in the recent section with current score
+_LIVE_STATUSES = {"live", "in progress", "in_progress", "halftime", "end of period", "end of half", "intermission"}
 
 def format_team_payload(team_name: str, league: str, abbrev: str, games: List[Dict], news: List[Dict]):
     games_sorted = sorted(games, key=lambda x: x.get("date", ""))
@@ -200,18 +203,27 @@ def format_team_payload(team_name: str, league: str, abbrev: str, games: List[Di
         s = (g.get("status") or "").lower().strip()
         return s in _COMPLETED_STATUSES or s.startswith("final")
 
+    def _is_live(g):
+        s = (g.get("status") or "").lower().strip()
+        r = (g.get("result") or "").upper()
+        return r == "LIVE" or s in _LIVE_STATUSES
+
     def _is_upcoming(g):
         s = (g.get("status") or "").lower().strip()
         return s in _UPCOMING_STATUSES
 
     completed = [g for g in games_sorted if _is_completed(g)]
+    live = [g for g in games_sorted if _is_live(g)]
     upcoming = [g for g in games_sorted if _is_upcoming(g)]
+
+    # Live games surface first in recent (most timely thing happening right now)
+    recent_all = sorted(live + completed, key=lambda x: x.get("date", ""))
 
     return {
         "name": team_name,
         "league": league,
         "abbrev": abbrev,
-        "recent_games": completed[-5:],
+        "recent_games": recent_all[-5:],
         "upcoming_games": upcoming[:5],
         "news": news,
         "record": {
@@ -333,6 +345,28 @@ async def root():
     }
 
 
+@app.get("/api/auth/status")
+async def auth_status(
+    sh_access_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = Header(None),
+):
+    """Check auth state without raising exceptions. Used by the frontend to decide which view to show."""
+    if not SUPABASE_ENABLED:
+        # Local/dev mode — treat everyone as authenticated so the app stays usable
+        return {"authenticated": True, "mode": "local"}
+    token = resolve_token(sh_access_token, authorization)
+    if not token:
+        return {"authenticated": False, "mode": "supabase"}
+    try:
+        supabase = get_supabase_client()
+        user = supabase.auth.get_user(token)
+        if user and user.user:
+            return {"authenticated": True, "mode": "supabase", "email": user.user.email}
+    except Exception:
+        pass
+    return {"authenticated": False, "mode": "supabase"}
+
+
 @app.get("/api/settings")
 async def get_user_settings(
     sh_access_token: Optional[str] = Cookie(None),
@@ -345,10 +379,10 @@ async def get_user_settings(
             supabase = get_supabase_client()
             user_response = supabase.auth.get_user(token)
             user_id = user_response.user.id
-            
+
             admin = get_supabase_admin()
             result = admin.table("user_settings").select("*").eq("user_id", user_id).execute()
-            
+
             if result.data and len(result.data) > 0:
                 row = result.data[0]
                 return {
@@ -356,10 +390,16 @@ async def get_user_settings(
                     "newsSources": row.get("news_sources", {}),
                     "newsCount": row.get("news_count", 5)
                 }
+            # Authenticated but no settings row yet → empty slate
+            return {"teams": [], "newsSources": DEFAULT_SETTINGS["newsSources"], "newsCount": 5}
         except Exception as e:
             print(f"Supabase settings fetch failed: {e}")
-    
-    # Fallback to local file
+
+    # Supabase enabled but no valid token → guest, return empty (no local-file bleed-through)
+    if SUPABASE_ENABLED:
+        return {"teams": [], "newsSources": DEFAULT_SETTINGS["newsSources"], "newsCount": 5}
+
+    # Supabase not configured (local dev) → fall back to file so dev experience still works
     return load_user_settings()
 
 
@@ -449,25 +489,66 @@ async def get_teams():
     
     return {"teams": teams}
 
+def _cache_is_stale(games: List[Dict]) -> bool:
+    """True if any scheduled game is today or in the past (scores may now exist)."""
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    scheduled = {"fut", "scheduled", "crit", "pre", "preview"}
+    return any(
+        g.get("date", "9999") <= today and          # <= catches today's games too
+        (g.get("status") or "").lower() in scheduled
+        for g in games
+    )
+
+
 @app.get("/api/team/{team_name}")
 async def get_team(team_name: str):
     """Get detailed data for a specific team."""
     data = load_cache()
     team_info = data.get("teams", {}).get(team_name)
-    
-    if team_info:
+    cached_games = team_info.get("games", []) if team_info else []
+
+    # Use cache only when it has games AND none of the scheduled entries are past
+    if cached_games and not _cache_is_stale(cached_games):
         league = team_info.get("league", "Unknown")
         news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
         return format_team_payload(
             team_name,
             league,
             team_info.get("abbrev", ""),
-            team_info.get("games", []),
+            cached_games,
             news_data
         )
-    
-    # Not in cache – fetch live data so new teams still show real news
-    detection, games, news = fetch_live_team_data(team_name)
+
+    # Cache missing, empty, or stale — fetch live
+    try:
+        detection, games, news = fetch_live_team_data(team_name)
+    except Exception as exc:
+        if not team_info:
+            raise HTTPException(status_code=404, detail=str(exc))
+        # Live fetch failed — serve stale cache rather than an empty response
+        league = team_info.get("league", "Unknown")
+        news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
+        return format_team_payload(team_name, league, team_info.get("abbrev", ""), cached_games, news_data)
+
+    # Live fetch returned no games — fall back to stale cache rather than "Offseason"
+    if not games and cached_games:
+        league = detection.get("league", team_info.get("league", "Unknown"))
+        news_data = fetch_latest_news(team_name, league, team_info.get("news", []))
+        return format_team_payload(team_name, league, team_info.get("abbrev", ""), cached_games, news_data)
+
+    # Write result back to cache so subsequent requests within this instance are instant
+    if games:
+        try:
+            cache = load_cache()
+            cache.setdefault("teams", {})[team_name] = {
+                "league": detection["league"],
+                "abbrev": detection.get("abbrev", ""),
+                "games": games,
+            }
+            CACHE_FILE.write_text(json.dumps(cache, indent=2))
+        except Exception:
+            pass
+
     news = fetch_latest_news(team_name, detection.get("league", "Unknown"), news)
     return format_team_payload(
         team_name,

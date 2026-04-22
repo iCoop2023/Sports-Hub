@@ -346,35 +346,95 @@ def fetch_team_schedule(team_name: str) -> Optional[List[Dict]]:
 
 
 def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
-    """Fetch NHL schedule."""
-    url = f"https://api-web.nhle.com/v1/club-schedule-season/{abbrev}/now"
+    """Fetch NHL schedule.
+
+    Primary: club-schedule-season endpoint (full season + playoffs in one call).
+    Fallback: daily scoreboard across ±14 days — reliable during playoffs and
+    for eliminated teams whose season endpoint may return an empty games list.
+    """
+    nhl_abbrev_to_name = {v: k for k, v in LEAGUE_APIS["NHL"]["teams"].items()}
+
+    def _parse_season_game(game):
+        opp_abbrev = game.get("opponentAbbrev", "")
+        return {
+            "id": game.get("id"),
+            "date": (game.get("gameDate") or "")[:10],
+            "opponent": nhl_abbrev_to_name.get(opp_abbrev, opp_abbrev),
+            "team_score": game.get("teamScore", 0),
+            "opponent_score": game.get("opponentScore", 0),
+            "status": game.get("gameState", ""),
+            "is_home": game.get("homeRoadFlag", "") == "H",
+            "result": get_result(game),
+            "league": "NHL",
+        }
+
+    # --- Primary: season endpoint ---
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(
+            f"https://api-web.nhle.com/v1/club-schedule-season/{abbrev}/now",
+            timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
-        nhl_abbrev_to_name = {v: k for k, v in LEAGUE_APIS["NHL"]["teams"].items()}
-
-        games = []
-        for game in data.get("games", []):
-            opp_abbrev = game.get("opponentAbbrev", "")
-            opponent_name = nhl_abbrev_to_name.get(opp_abbrev, opp_abbrev)
-            games.append({
-                "id": game["id"],
-                "date": game["gameDate"][:10],
-                "opponent": opponent_name,
-                "team_score": game.get("teamScore", 0),
-                "opponent_score": game.get("opponentScore", 0),
-                "status": game.get("gameState", ""),
-                "is_home": game.get("homeRoadFlag", "") == "H",
-                "result": get_result(game),
-                "league": "NHL"
-            })
-        return games
+        raw = data.get("games", [])
+        if raw:
+            parsed = []
+            for g in raw:
+                try:
+                    parsed.append(_parse_season_game(g))
+                except Exception:
+                    continue
+            if parsed:
+                return parsed
+        print(f"NHL season endpoint returned 0 games for {abbrev}, trying scoreboard fallback")
     except Exception as e:
-        print(f"NHL fetch failed for {abbrev}: {e}")
-        return []
+        print(f"NHL season endpoint failed for {abbrev}: {e}")
 
+    # --- Fallback: daily scoreboard ±21 days ---
+    games: dict = {}
+    today = datetime.now()
+    for offset in range(-21, 8):
+        date_str = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
+        try:
+            resp = requests.get(
+                f"https://api-web.nhle.com/v1/scoreboard/{date_str}", timeout=4)
+            resp.raise_for_status()
+            data = resp.json()
+            for day in data.get("gamesByDate", []):
+                for game in day.get("games", []):
+                    home = game.get("homeTeam", {})
+                    away = game.get("awayTeam", {})
+                    h_abbrev = home.get("abbrev", "")
+                    a_abbrev = away.get("abbrev", "")
+                    if abbrev not in (h_abbrev, a_abbrev):
+                        continue
+                    is_home = abbrev == h_abbrev
+                    opp_abbrev = a_abbrev if is_home else h_abbrev
+                    status = game.get("gameState", "")
+                    h_score = home.get("score", 0)
+                    a_score = away.get("score", 0)
+                    t_score = h_score if is_home else a_score
+                    o_score = a_score if is_home else h_score
+                    if status in ("FINAL", "OFF"):
+                        result = "W" if t_score > o_score else ("L" if t_score < o_score else "T")
+                    elif status == "LIVE":
+                        result = "LIVE"
+                    else:
+                        result = "SCHEDULED"
+                    gid = game.get("id")
+                    games[gid] = {
+                        "id": gid,
+                        "date": game.get("gameDate", date_str)[:10],
+                        "opponent": nhl_abbrev_to_name.get(opp_abbrev, opp_abbrev),
+                        "team_score": t_score,
+                        "opponent_score": o_score,
+                        "status": status,
+                        "is_home": is_home,
+                        "result": result,
+                        "league": "NHL",
+                    }
+        except Exception:
+            continue
+    return list(games.values())
 
 def fetch_mlb_schedule(team_name: str) -> List[Dict]:
     """Fetch MLB schedule from the official MLB Stats API (free, no auth)."""
@@ -513,6 +573,29 @@ def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
     if not numeric_id:
         print(f"ESPN: no numeric ID found for {team_name} ({league})")
         return []
+    sport_path, id_map = entry
+
+    numeric_id = id_map.get(team_name)
+    if not numeric_id:
+        # Last-resort live lookup
+        try:
+            r = requests.get(
+                f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/teams",
+                timeout=10)
+            r.raise_for_status()
+            for t in (r.json().get("sports", [{}])[0]
+                      .get("leagues", [{}])[0].get("teams", [])):
+                if t.get("team", {}).get("abbreviation", "").upper() == abbrev.upper():
+                    numeric_id = t["team"]["id"]
+                    break
+        except Exception as e:
+            print(f"ESPN ID lookup failed for {team_name}: {e}")
+
+    if not numeric_id:
+        print(f"ESPN: no numeric ID found for {team_name} ({league})")
+        return []
+
+    return _fetch_espn_by_id(team_name, numeric_id, sport_path, league, abbrev)
 
     return _fetch_espn_by_id(team_name, numeric_id, sport_path, league, abbrev)
 
@@ -524,35 +607,47 @@ def fetch_espn_soccer_schedule(team_name: str, team_id: str, league_code: str) -
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
+
         games = []
         for event in data.get("events", []):
-            comp = event["competitions"][0]
-            home_team = comp["competitors"][0] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][1]
-            away_team = comp["competitors"][1] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][0]
-            
-            is_home = home_team["team"]["id"] == team_id
-            opponent = away_team["team"]["displayName"] if is_home else home_team["team"]["displayName"]
-            
-            # Extract scores safely
-            home_score = home_team.get("score", 0)
-            away_score = away_team.get("score", 0)
-            if isinstance(home_score, dict):
-                home_score = int(float(home_score.get("value", 0)))
-            if isinstance(away_score, dict):
-                away_score = int(float(away_score.get("value", 0)))
-            
-            games.append({
-                "id": event["id"],
-                "date": event["date"][:10] if "T" in event["date"] else event["date"],
-                "opponent": opponent,
-                "team_score": home_score if is_home else away_score,
-                "opponent_score": away_score if is_home else home_score,
-                "status": comp["status"]["type"]["description"],
-                "is_home": is_home,
-                "result": get_espn_result(comp, is_home),
-                "league": league_code.upper().replace(".", " ")
-            })
+            try:
+                comp = event["competitions"][0]
+                competitors = comp.get("competitors", [])
+                if len(competitors) < 2:
+                    continue
+                home_team = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
+                away_team = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+
+                # ESPN returns team id as int; compare as strings to avoid type mismatch
+                is_home = str(home_team.get("team", {}).get("id", "")) == str(team_id)
+                opp_team = away_team if is_home else home_team
+                opponent = opp_team.get("team", {}).get("displayName", "")
+
+                def _safe_score(c):
+                    s = c.get("score", 0)
+                    if isinstance(s, dict):
+                        s = s.get("value", 0)
+                    try:
+                        return int(float(s))
+                    except (TypeError, ValueError):
+                        return 0
+
+                home_score = _safe_score(home_team)
+                away_score = _safe_score(away_team)
+
+                games.append({
+                    "id": event.get("id"),
+                    "date": (event.get("date", ""))[:10],
+                    "opponent": opponent,
+                    "team_score": home_score if is_home else away_score,
+                    "opponent_score": away_score if is_home else home_score,
+                    "status": comp.get("status", {}).get("type", {}).get("description", ""),
+                    "is_home": is_home,
+                    "result": get_espn_result(comp, is_home),
+                    "league": league_code.upper().replace(".", " ")
+                })
+            except Exception:
+                continue
         return games
     except Exception as e:
         print(f"ESPN soccer fetch failed for {team_name}: {e}")
@@ -613,23 +708,26 @@ def get_result(game: Dict) -> str:
 
 
 def get_espn_result(comp: Dict, is_home: bool) -> str:
-    """Determine W/L from ESPN game."""
+    """Determine W/L/T from ESPN game."""
     if comp["status"]["type"]["completed"]:
         home = comp["competitors"][0] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][1]
         away = comp["competitors"][1] if comp["competitors"][0]["homeAway"] == "home" else comp["competitors"][0]
-        
-        # Handle both dict and int score formats
+
         home_score = home.get("score", 0)
         away_score = away.get("score", 0)
         if isinstance(home_score, dict):
             home_score = float(home_score.get("value", 0))
         if isinstance(away_score, dict):
             away_score = float(away_score.get("value", 0))
-        
-        if is_home:
-            return "W" if home_score > away_score else "L"
+
+        my_score = home_score if is_home else away_score
+        opp_score = away_score if is_home else home_score
+        if my_score > opp_score:
+            return "W"
+        elif my_score < opp_score:
+            return "L"
         else:
-            return "W" if away_score > home_score else "L"
+            return "T"
     return "SCHEDULED"
 
 
