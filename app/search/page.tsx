@@ -34,7 +34,7 @@ export default function SearchPage() {
   }, [])
 
   const results = useMemo(() => {
-    if (!query.trim()) return allTeams.slice(0, 30)
+    if (!query.trim()) return allTeams
     const q = query.toLowerCase()
     return allTeams
       .filter(
