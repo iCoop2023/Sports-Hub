@@ -112,7 +112,7 @@ export default function ManagePage() {
         className="sticky top-0 z-40 border-b"
         style={{ background: 'rgba(9,9,11,0.88)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.07)' }}
       >
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-3">
           <Link href="/" className="text-zinc-500 hover:text-white transition-colors shrink-0 p-1 -ml-1">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -139,7 +139,7 @@ export default function ManagePage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-5 space-y-8">
+      <main className="max-w-4xl mx-auto px-4 py-5 space-y-8">
         {loading && (
           <div className="flex justify-center py-16">
             <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />

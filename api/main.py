@@ -345,6 +345,28 @@ async def root():
     }
 
 
+@app.get("/api/auth/status")
+async def auth_status(
+    sh_access_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = Header(None),
+):
+    """Check auth state without raising exceptions. Used by the frontend to decide which view to show."""
+    if not SUPABASE_ENABLED:
+        # Local/dev mode — treat everyone as authenticated so the app stays usable
+        return {"authenticated": True, "mode": "local"}
+    token = resolve_token(sh_access_token, authorization)
+    if not token:
+        return {"authenticated": False, "mode": "supabase"}
+    try:
+        supabase = get_supabase_client()
+        user = supabase.auth.get_user(token)
+        if user and user.user:
+            return {"authenticated": True, "mode": "supabase", "email": user.user.email}
+    except Exception:
+        pass
+    return {"authenticated": False, "mode": "supabase"}
+
+
 @app.get("/api/settings")
 async def get_user_settings(
     sh_access_token: Optional[str] = Cookie(None),
@@ -357,10 +379,10 @@ async def get_user_settings(
             supabase = get_supabase_client()
             user_response = supabase.auth.get_user(token)
             user_id = user_response.user.id
-            
+
             admin = get_supabase_admin()
             result = admin.table("user_settings").select("*").eq("user_id", user_id).execute()
-            
+
             if result.data and len(result.data) > 0:
                 row = result.data[0]
                 return {
@@ -368,10 +390,16 @@ async def get_user_settings(
                     "newsSources": row.get("news_sources", {}),
                     "newsCount": row.get("news_count", 5)
                 }
+            # Authenticated but no settings row yet → empty slate
+            return {"teams": [], "newsSources": DEFAULT_SETTINGS["newsSources"], "newsCount": 5}
         except Exception as e:
             print(f"Supabase settings fetch failed: {e}")
-    
-    # Fallback to local file
+
+    # Supabase enabled but no valid token → guest, return empty (no local-file bleed-through)
+    if SUPABASE_ENABLED:
+        return {"teams": [], "newsSources": DEFAULT_SETTINGS["newsSources"], "newsCount": 5}
+
+    # Supabase not configured (local dev) → fall back to file so dev experience still works
     return load_user_settings()
 
 

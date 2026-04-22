@@ -44,7 +44,7 @@ export default function TeamPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: '#09090b' }}>
         <PageHeader name={teamName} />
         <div className="flex justify-center py-24">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -55,7 +55,7 @@ export default function TeamPage() {
 
   if (error || !team) {
     return (
-      <div className="min-h-screen bg-black flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: '#09090b' }}>
         <PageHeader name={teamName} />
         <div className="text-center py-24">
           <p className="text-zinc-400 text-sm">Could not load team data.</p>
@@ -78,7 +78,7 @@ export default function TeamPage() {
   const liveGame = uniqueGames.find((g) => isLive(g.status))
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ background: '#09090b' }}>
       <PageHeader name={team.name} />
 
       {/* Hero */}
@@ -86,7 +86,7 @@ export default function TeamPage() {
         className="relative overflow-hidden"
         style={{ background: `linear-gradient(180deg, ${color}18 0%, transparent 100%)` }}
       >
-        <div className="max-w-2xl mx-auto px-4 pt-6 pb-8">
+        <div className="max-w-4xl mx-auto px-4 pt-6 pb-8">
           <div className="flex items-start gap-4">
             <TeamLogo abbrev={team.abbrev} league={team.league} size={72} />
             <div className="flex-1">
@@ -142,7 +142,7 @@ export default function TeamPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 pb-12 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 pb-12 space-y-8">
         {/* Schedule */}
         <section>
           <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-3">Schedule</h2>
@@ -178,8 +178,8 @@ export default function TeamPage() {
 
 function PageHeader({ name }: { name: string }) {
   return (
-    <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/[0.06]">
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
+    <header className="sticky top-0 z-40 border-b" style={{ background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.07)' }}>
+      <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-3">
         <Link href="/" className="text-zinc-400 hover:text-white transition-colors shrink-0">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
