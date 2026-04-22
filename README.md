@@ -107,6 +107,48 @@ Edit `config/teams.json` to add/remove teams:
 }
 ```
 
+## Supabase Setup (Auth + Cloud Settings Sync)
+
+Sports Hub can run without Supabase, but enabling it gives you:
+- Email + password authentication
+- User-specific settings stored in the cloud (`user_settings` table)
+
+### 1) Create a Supabase project
+- Go to Supabase dashboard and create a new project.
+- In **Authentication → URL Configuration**, add your app site URL(s).
+
+### 2) Create database objects
+- Open **SQL Editor** in Supabase.
+- Run the SQL from `supabase/schema.sql`.
+
+### 3) Configure environment variables
+- Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+- Fill in:
+  - `SUPABASE_URL`
+  - `SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_KEY`
+  - `APP_URL` (optional app URL)
+
+### 4) Install backend dependencies and run API
+```bash
+cd api
+pip install -r requirements.txt
+python3 main.py
+```
+
+### 5) Verify auth endpoints
+```bash
+curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"yourStrongPassword"}'
+```
+
+If Supabase env vars are not set, auth/settings endpoints gracefully fall back
+to local behavior where possible.
+
 ## Tech Stack
 
 - **Backend**: Python 3.12, FastAPI
