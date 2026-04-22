@@ -1,12 +1,5 @@
 {
-  "teams": [
-    { "name": "Edmonton Oilers", "league": "NHL" },
-    { "name": "Pittsburgh Penguins", "league": "NHL" },
-    { "name": "Toronto Blue Jays", "league": "MLB" },
-    { "name": "Kansas City Chiefs", "league": "NFL" },
-    { "name": "Toronto Raptors", "league": "NBA" },
-    { "name": "Real Madrid", "league": "La Liga" }
-  ],
+  "teams": [],
   "newsSources": {
     "tsn": true,
     "sportsnet": true,

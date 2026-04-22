@@ -1,0 +1,1999 @@
+{
+  "fetched_at": "2026-04-20T17:46:10.876357",
+  "teams": {
+    "Anaheim Ducks": {
+      "abbrev": "ANA",
+      "league": "NHL",
+      "games": []
+    },
+    "Arizona Coyotes": {
+      "abbrev": "ARI",
+      "league": "NHL",
+      "games": []
+    },
+    "Boston Bruins": {
+      "abbrev": "BOS",
+      "league": "NHL",
+      "games": []
+    },
+    "Buffalo Sabres": {
+      "abbrev": "BUF",
+      "league": "NHL",
+      "games": []
+    },
+    "Calgary Flames": {
+      "abbrev": "CGY",
+      "league": "NHL",
+      "games": []
+    },
+    "Carolina Hurricanes": {
+      "abbrev": "CAR",
+      "league": "NHL",
+      "games": []
+    },
+    "Chicago Blackhawks": {
+      "abbrev": "CHI",
+      "league": "NHL",
+      "games": []
+    },
+    "Colorado Avalanche": {
+      "abbrev": "COL",
+      "league": "NHL",
+      "games": []
+    },
+    "Columbus Blue Jackets": {
+      "abbrev": "CBJ",
+      "league": "NHL",
+      "games": []
+    },
+    "Dallas Stars": {
+      "abbrev": "DAL",
+      "league": "NHL",
+      "games": []
+    },
+    "Detroit Red Wings": {
+      "abbrev": "DET",
+      "league": "NHL",
+      "games": []
+    },
+    "Edmonton Oilers": {
+      "abbrev": "EDM",
+      "league": "NHL",
+      "games": [
+        {
+          "id": 2025021264,
+          "date": "2026-04-11",
+          "opponent": "Los Angeles Kings",
+          "team_score": 0,
+          "opponent_score": 1,
+          "status": "OFF",
+          "result": "L",
+          "is_home": false,
+          "league": "NHL"
+        },
+        {
+          "id": 2025021289,
+          "date": "2026-04-13",
+          "opponent": "Colorado Avalanche",
+          "team_score": 1,
+          "opponent_score": 2,
+          "status": "OFF",
+          "result": "L",
+          "is_home": true,
+          "league": "NHL"
+        },
+        {
+          "id": 2025021311,
+          "date": "2026-04-16",
+          "opponent": "Vancouver Canucks",
+          "team_score": 6,
+          "opponent_score": 1,
+          "status": "OFF",
+          "result": "W",
+          "is_home": true,
+          "league": "NHL"
+        },
+        {
+          "id": 2025030181,
+          "date": "2026-04-20",
+          "opponent": "Anaheim Ducks",
+          "team_score": 0,
+          "opponent_score": 0,
+          "status": "FUT",
+          "result": "SCHEDULED",
+          "is_home": true,
+          "league": "NHL"
+        },
+        {
+          "id": 2025030182,
+          "date": "2026-04-22",
+          "opponent": "Anaheim Ducks",
+          "team_score": 0,
+          "opponent_score": 0,
+          "status": "FUT",
+          "result": "SCHEDULED",
+          "is_home": true,
+          "league": "NHL"
+        },
+        {
+          "id": 2025030183,
+          "date": "2026-04-24",
+          "opponent": "Anaheim Ducks",
+          "team_score": 0,
+          "opponent_score": 0,
+          "status": "FUT",
+          "result": "SCHEDULED",
+          "is_home": false,
+          "league": "NHL"
+        },
+        {
+          "id": 2025030184,
+          "date": "2026-04-26",
+          "opponent": "Anaheim Ducks",
+          "team_score": 0,
+          "opponent_score": 0,
+          "status": "FUT",
+          "result": "SCHEDULED",
+          "is_home": false,
+          "league": "NHL"
+        },
+        {
+          "id": 2025030185,
+          "date": "2026-04-28",
+          "opponent": "Anaheim Ducks",
+          "team_score": 0,
+          "opponent_score": 0,
+          "status": "FUT",
+          "result": "SCHEDULED",
+          "is_home": true,
+          "league": "NHL"
+        }
+      ]
+    },
+    "Florida Panthers": {
+      "abbrev": "FLA",
+      "league": "NHL",
+      "games": []
+    },
+    "Los Angeles Kings": {
+      "abbrev": "LAK",
+      "league": "NHL",
+      "games": []
+    },
+    "Minnesota Wild": {
+      "abbrev": "MIN",
+      "league": "NHL",
+      "games": []
+    },
+    "Montreal Canadiens": {
+      "abbrev": "MTL",
+      "league": "NHL",
+      "games": []
+    },
+    "Nashville Predators": {
+      "abbrev": "NSH",
+      "league": "NHL",
+      "games": []
+    },
+    "New Jersey Devils": {
+      "abbrev": "NJD",
+      "league": "NHL",
+      "games": []
+    },
+    "New York Islanders": {
+      "abbrev": "NYI",
+      "league": "NHL",
+      "games": []
+    },
+    "New York Rangers": {
+      "abbrev": "NYR",
+      "league": "NHL",
+      "games": []
+    },
+    "Ottawa Senators": {
+      "abbrev": "OTT",
+      "league": "NHL",
+      "games": []
+    },
+    "Philadelphia Flyers": {
+      "abbrev": "PHI",
+      "league": "NHL",
+      "games": []
+    },
+    "Pittsburgh Penguins": {
+      "abbrev": "PIT",
+      "league": "NHL",
+      "games": []
+    },
+    "San Jose Sharks": {
+      "abbrev": "SJS",
+      "league": "NHL",
+      "games": []
+    },
+    "Seattle Kraken": {
+      "abbrev": "SEA",
+      "league": "NHL",
+      "games": []
+    },
+    "St. Louis Blues": {
+      "abbrev": "STL",
+      "league": "NHL",
+      "games": []
+    },
+    "Tampa Bay Lightning": {
+      "abbrev": "TBL",
+      "league": "NHL",
+      "games": []
+    },
+    "Toronto Maple Leafs": {
+      "abbrev": "TOR",
+      "league": "NHL",
+      "games": []
+    },
+    "Utah Hockey Club": {
+      "abbrev": "UTA",
+      "league": "NHL",
+      "games": []
+    },
+    "Vancouver Canucks": {
+      "abbrev": "VAN",
+      "league": "NHL",
+      "games": []
+    },
+    "Vegas Golden Knights": {
+      "abbrev": "VGK",
+      "league": "NHL",
+      "games": []
+    },
+    "Washington Capitals": {
+      "abbrev": "WSH",
+      "league": "NHL",
+      "games": []
+    },
+    "Winnipeg Jets": {
+      "abbrev": "WPG",
+      "league": "NHL",
+      "games": []
+    },
+    "Arizona Diamondbacks": {
+      "abbrev": "ari",
+      "league": "MLB",
+      "games": []
+    },
+    "Atlanta Braves": {
+      "abbrev": "atl",
+      "league": "MLB",
+      "games": []
+    },
+    "Baltimore Orioles": {
+      "abbrev": "bal",
+      "league": "MLB",
+      "games": []
+    },
+    "Boston Red Sox": {
+      "abbrev": "bos",
+      "league": "MLB",
+      "games": []
+    },
+    "Chicago Cubs": {
+      "abbrev": "chc",
+      "league": "MLB",
+      "games": []
+    },
+    "Chicago White Sox": {
+      "abbrev": "chw",
+      "league": "MLB",
+      "games": []
+    },
+    "Cincinnati Reds": {
+      "abbrev": "cin",
+      "league": "MLB",
+      "games": []
+    },
+    "Cleveland Guardians": {
+      "abbrev": "cle",
+      "league": "MLB",
+      "games": []
+    },
+    "Colorado Rockies": {
+      "abbrev": "col",
+      "league": "MLB",
+      "games": []
+    },
+    "Detroit Tigers": {
+      "abbrev": "det",
+      "league": "MLB",
+      "games": []
+    },
+    "Houston Astros": {
+      "abbrev": "hou",
+      "league": "MLB",
+      "games": []
+    },
+    "Kansas City Royals": {
+      "abbrev": "kc",
+      "league": "MLB",
+      "games": []
+    },
+    "Los Angeles Angels": {
+      "abbrev": "laa",
+      "league": "MLB",
+      "games": []
+    },
+    "Los Angeles Dodgers": {
+      "abbrev": "lad",
+      "league": "MLB",
+      "games": []
+    },
+    "Miami Marlins": {
+      "abbrev": "mia",
+      "league": "MLB",
+      "games": []
+    },
+    "Milwaukee Brewers": {
+      "abbrev": "mil",
+      "league": "MLB",
+      "games": []
+    },
+    "Minnesota Twins": {
+      "abbrev": "min",
+      "league": "MLB",
+      "games": []
+    },
+    "New York Mets": {
+      "abbrev": "nym",
+      "league": "MLB",
+      "games": []
+    },
+    "New York Yankees": {
+      "abbrev": "nyy",
+      "league": "MLB",
+      "games": []
+    },
+    "Oakland Athletics": {
+      "abbrev": "oak",
+      "league": "MLB",
+      "games": []
+    },
+    "Philadelphia Phillies": {
+      "abbrev": "phi",
+      "league": "MLB",
+      "games": []
+    },
+    "Pittsburgh Pirates": {
+      "abbrev": "pit",
+      "league": "MLB",
+      "games": []
+    },
+    "San Diego Padres": {
+      "abbrev": "sd",
+      "league": "MLB",
+      "games": []
+    },
+    "San Francisco Giants": {
+      "abbrev": "sf",
+      "league": "MLB",
+      "games": []
+    },
+    "Seattle Mariners": {
+      "abbrev": "sea",
+      "league": "MLB",
+      "games": []
+    },
+    "St. Louis Cardinals": {
+      "abbrev": "stl",
+      "league": "MLB",
+      "games": []
+    },
+    "Tampa Bay Rays": {
+      "abbrev": "tb",
+      "league": "MLB",
+      "games": []
+    },
+    "Texas Rangers": {
+      "abbrev": "tex",
+      "league": "MLB",
+      "games": []
+    },
+    "Toronto Blue Jays": {
+      "abbrev": "tor",
+      "league": "MLB",
+      "games": []
+    },
+    "Washington Nationals": {
+      "abbrev": "wsh",
+      "league": "MLB",
+      "games": []
+    },
+    "Atlanta Hawks": {
+      "abbrev": "atl",
+      "league": "NBA",
+      "games": []
+    },
+    "Boston Celtics": {
+      "abbrev": "bos",
+      "league": "NBA",
+      "games": []
+    },
+    "Brooklyn Nets": {
+      "abbrev": "bkn",
+      "league": "NBA",
+      "games": []
+    },
+    "Charlotte Hornets": {
+      "abbrev": "cha",
+      "league": "NBA",
+      "games": []
+    },
+    "Chicago Bulls": {
+      "abbrev": "chi",
+      "league": "NBA",
+      "games": []
+    },
+    "Cleveland Cavaliers": {
+      "abbrev": "cle",
+      "league": "NBA",
+      "games": []
+    },
+    "Dallas Mavericks": {
+      "abbrev": "dal",
+      "league": "NBA",
+      "games": []
+    },
+    "Denver Nuggets": {
+      "abbrev": "den",
+      "league": "NBA",
+      "games": []
+    },
+    "Detroit Pistons": {
+      "abbrev": "det",
+      "league": "NBA",
+      "games": []
+    },
+    "Golden State Warriors": {
+      "abbrev": "gs",
+      "league": "NBA",
+      "games": []
+    },
+    "Houston Rockets": {
+      "abbrev": "hou",
+      "league": "NBA",
+      "games": []
+    },
+    "Indiana Pacers": {
+      "abbrev": "ind",
+      "league": "NBA",
+      "games": []
+    },
+    "LA Clippers": {
+      "abbrev": "lac",
+      "league": "NBA",
+      "games": []
+    },
+    "Los Angeles Lakers": {
+      "abbrev": "lal",
+      "league": "NBA",
+      "games": []
+    },
+    "Memphis Grizzlies": {
+      "abbrev": "mem",
+      "league": "NBA",
+      "games": []
+    },
+    "Miami Heat": {
+      "abbrev": "mia",
+      "league": "NBA",
+      "games": []
+    },
+    "Milwaukee Bucks": {
+      "abbrev": "mil",
+      "league": "NBA",
+      "games": []
+    },
+    "Minnesota Timberwolves": {
+      "abbrev": "min",
+      "league": "NBA",
+      "games": []
+    },
+    "New Orleans Pelicans": {
+      "abbrev": "no",
+      "league": "NBA",
+      "games": []
+    },
+    "New York Knicks": {
+      "abbrev": "ny",
+      "league": "NBA",
+      "games": []
+    },
+    "Oklahoma City Thunder": {
+      "abbrev": "okc",
+      "league": "NBA",
+      "games": []
+    },
+    "Orlando Magic": {
+      "abbrev": "orl",
+      "league": "NBA",
+      "games": []
+    },
+    "Philadelphia 76ers": {
+      "abbrev": "phi",
+      "league": "NBA",
+      "games": []
+    },
+    "Phoenix Suns": {
+      "abbrev": "phx",
+      "league": "NBA",
+      "games": []
+    },
+    "Portland Trail Blazers": {
+      "abbrev": "por",
+      "league": "NBA",
+      "games": []
+    },
+    "Sacramento Kings": {
+      "abbrev": "sac",
+      "league": "NBA",
+      "games": []
+    },
+    "San Antonio Spurs": {
+      "abbrev": "sa",
+      "league": "NBA",
+      "games": []
+    },
+    "Toronto Raptors": {
+      "abbrev": "tor",
+      "league": "NBA",
+      "games": []
+    },
+    "Utah Jazz": {
+      "abbrev": "utah",
+      "league": "NBA",
+      "games": []
+    },
+    "Washington Wizards": {
+      "abbrev": "wsh",
+      "league": "NBA",
+      "games": []
+    },
+    "Arizona Cardinals": {
+      "abbrev": "ari",
+      "league": "NFL",
+      "games": []
+    },
+    "Atlanta Falcons": {
+      "abbrev": "atl",
+      "league": "NFL",
+      "games": []
+    },
+    "Baltimore Ravens": {
+      "abbrev": "bal",
+      "league": "NFL",
+      "games": []
+    },
+    "Buffalo Bills": {
+      "abbrev": "buf",
+      "league": "NFL",
+      "games": []
+    },
+    "Carolina Panthers": {
+      "abbrev": "car",
+      "league": "NFL",
+      "games": []
+    },
+    "Chicago Bears": {
+      "abbrev": "chi",
+      "league": "NFL",
+      "games": []
+    },
+    "Cincinnati Bengals": {
+      "abbrev": "cin",
+      "league": "NFL",
+      "games": []
+    },
+    "Cleveland Browns": {
+      "abbrev": "cle",
+      "league": "NFL",
+      "games": []
+    },
+    "Dallas Cowboys": {
+      "abbrev": "dal",
+      "league": "NFL",
+      "games": []
+    },
+    "Denver Broncos": {
+      "abbrev": "den",
+      "league": "NFL",
+      "games": []
+    },
+    "Detroit Lions": {
+      "abbrev": "det",
+      "league": "NFL",
+      "games": []
+    },
+    "Green Bay Packers": {
+      "abbrev": "gb",
+      "league": "NFL",
+      "games": []
+    },
+    "Houston Texans": {
+      "abbrev": "hou",
+      "league": "NFL",
+      "games": []
+    },
+    "Indianapolis Colts": {
+      "abbrev": "ind",
+      "league": "NFL",
+      "games": []
+    },
+    "Jacksonville Jaguars": {
+      "abbrev": "jax",
+      "league": "NFL",
+      "games": []
+    },
+    "Kansas City Chiefs": {
+      "abbrev": "kc",
+      "league": "NFL",
+      "games": []
+    },
+    "Las Vegas Raiders": {
+      "abbrev": "lv",
+      "league": "NFL",
+      "games": []
+    },
+    "Los Angeles Chargers": {
+      "abbrev": "lac",
+      "league": "NFL",
+      "games": []
+    },
+    "Los Angeles Rams": {
+      "abbrev": "lar",
+      "league": "NFL",
+      "games": []
+    },
+    "Miami Dolphins": {
+      "abbrev": "mia",
+      "league": "NFL",
+      "games": []
+    },
+    "Minnesota Vikings": {
+      "abbrev": "min",
+      "league": "NFL",
+      "games": []
+    },
+    "New England Patriots": {
+      "abbrev": "ne",
+      "league": "NFL",
+      "games": []
+    },
+    "New Orleans Saints": {
+      "abbrev": "no",
+      "league": "NFL",
+      "games": []
+    },
+    "New York Giants": {
+      "abbrev": "nyg",
+      "league": "NFL",
+      "games": []
+    },
+    "New York Jets": {
+      "abbrev": "nyj",
+      "league": "NFL",
+      "games": []
+    },
+    "Philadelphia Eagles": {
+      "abbrev": "phi",
+      "league": "NFL",
+      "games": []
+    },
+    "Pittsburgh Steelers": {
+      "abbrev": "pit",
+      "league": "NFL",
+      "games": []
+    },
+    "San Francisco 49ers": {
+      "abbrev": "sf",
+      "league": "NFL",
+      "games": []
+    },
+    "Seattle Seahawks": {
+      "abbrev": "sea",
+      "league": "NFL",
+      "games": []
+    },
+    "Tampa Bay Buccaneers": {
+      "abbrev": "tb",
+      "league": "NFL",
+      "games": []
+    },
+    "Tennessee Titans": {
+      "abbrev": "ten",
+      "league": "NFL",
+      "games": []
+    },
+    "Washington Commanders": {
+      "abbrev": "wsh",
+      "league": "NFL",
+      "games": []
+    },
+    "BC Lions": {
+      "abbrev": "BC",
+      "league": "CFL",
+      "games": []
+    },
+    "Calgary Stampeders": {
+      "abbrev": "CGY",
+      "league": "CFL",
+      "games": []
+    },
+    "Edmonton Elks": {
+      "abbrev": "EDM",
+      "league": "CFL",
+      "games": []
+    },
+    "Saskatchewan Roughriders": {
+      "abbrev": "SSK",
+      "league": "CFL",
+      "games": []
+    },
+    "Winnipeg Blue Bombers": {
+      "abbrev": "WPG",
+      "league": "CFL",
+      "games": []
+    },
+    "Hamilton Tiger-Cats": {
+      "abbrev": "HAM",
+      "league": "CFL",
+      "games": []
+    },
+    "Montreal Alouettes": {
+      "abbrev": "MTL",
+      "league": "CFL",
+      "games": []
+    },
+    "Ottawa Redblacks": {
+      "abbrev": "OTT",
+      "league": "CFL",
+      "games": []
+    },
+    "Toronto Argonauts": {
+      "abbrev": "TOR",
+      "league": "CFL",
+      "games": []
+    },
+    "Brampton Honey Badgers": {
+      "abbrev": "BRA",
+      "league": "CEBL",
+      "games": []
+    },
+    "Calgary Surge": {
+      "abbrev": "CGY",
+      "league": "CEBL",
+      "games": []
+    },
+    "Edmonton Stingers": {
+      "abbrev": "EDM",
+      "league": "CEBL",
+      "games": []
+    },
+    "Montreal Alliance": {
+      "abbrev": "MTL",
+      "league": "CEBL",
+      "games": []
+    },
+    "Niagara River Lions": {
+      "abbrev": "NIA",
+      "league": "CEBL",
+      "games": []
+    },
+    "Ottawa BlackJacks": {
+      "abbrev": "OTT",
+      "league": "CEBL",
+      "games": []
+    },
+    "Saskatchewan Rattlers": {
+      "abbrev": "SSK",
+      "league": "CEBL",
+      "games": []
+    },
+    "Scarborough Shooting Stars": {
+      "abbrev": "SCA",
+      "league": "CEBL",
+      "games": []
+    },
+    "Vancouver Bandits": {
+      "abbrev": "VAN",
+      "league": "CEBL",
+      "games": []
+    },
+    "Winnipeg Sea Bears": {
+      "abbrev": "WPG",
+      "league": "CEBL",
+      "games": []
+    },
+    "Brandon Wheat Kings": {
+      "abbrev": "16",
+      "league": "WHL",
+      "games": []
+    },
+    "Calgary Hitmen": {
+      "abbrev": "2",
+      "league": "WHL",
+      "games": []
+    },
+    "Edmonton Oil Kings": {
+      "abbrev": "20",
+      "league": "WHL",
+      "games": []
+    },
+    "Kamloops Blazers": {
+      "abbrev": "4",
+      "league": "WHL",
+      "games": []
+    },
+    "Kelowna Rockets": {
+      "abbrev": "5",
+      "league": "WHL",
+      "games": []
+    },
+    "Lethbridge Hurricanes": {
+      "abbrev": "6",
+      "league": "WHL",
+      "games": []
+    },
+    "Medicine Hat Tigers": {
+      "abbrev": "7",
+      "league": "WHL",
+      "games": []
+    },
+    "Moose Jaw Warriors": {
+      "abbrev": "21",
+      "league": "WHL",
+      "games": []
+    },
+    "Portland Winterhawks": {
+      "abbrev": "8",
+      "league": "WHL",
+      "games": []
+    },
+    "Prince Albert Raiders": {
+      "abbrev": "22",
+      "league": "WHL",
+      "games": []
+    },
+    "Prince George Cougars": {
+      "abbrev": "9",
+      "league": "WHL",
+      "games": []
+    },
+    "Red Deer Rebels": {
+      "abbrev": "10",
+      "league": "WHL",
+      "games": []
+    },
+    "Regina Pats": {
+      "abbrev": "23",
+      "league": "WHL",
+      "games": []
+    },
+    "Saskatoon Blades": {
+      "abbrev": "24",
+      "league": "WHL",
+      "games": []
+    },
+    "Seattle Thunderbirds": {
+      "abbrev": "11",
+      "league": "WHL",
+      "games": []
+    },
+    "Spokane Chiefs": {
+      "abbrev": "12",
+      "league": "WHL",
+      "games": []
+    },
+    "Swift Current Broncos": {
+      "abbrev": "25",
+      "league": "WHL",
+      "games": []
+    },
+    "Tri-City Americans": {
+      "abbrev": "13",
+      "league": "WHL",
+      "games": []
+    },
+    "Vancouver Giants": {
+      "abbrev": "14",
+      "league": "WHL",
+      "games": []
+    },
+    "Victoria Royals": {
+      "abbrev": "15",
+      "league": "WHL",
+      "games": []
+    },
+    "Wenatchee Wild": {
+      "abbrev": "26",
+      "league": "WHL",
+      "games": []
+    },
+    "Arsenal": {
+      "abbrev": "359",
+      "league": "Premier League",
+      "games": []
+    },
+    "Aston Villa": {
+      "abbrev": "362",
+      "league": "Premier League",
+      "games": []
+    },
+    "Bournemouth": {
+      "abbrev": "349",
+      "league": "Premier League",
+      "games": []
+    },
+    "Brentford": {
+      "abbrev": "337",
+      "league": "Premier League",
+      "games": []
+    },
+    "Brighton": {
+      "abbrev": "331",
+      "league": "Premier League",
+      "games": []
+    },
+    "Chelsea": {
+      "abbrev": "363",
+      "league": "Premier League",
+      "games": []
+    },
+    "Crystal Palace": {
+      "abbrev": "384",
+      "league": "Premier League",
+      "games": []
+    },
+    "Everton": {
+      "abbrev": "368",
+      "league": "Premier League",
+      "games": []
+    },
+    "Fulham": {
+      "abbrev": "370",
+      "league": "Premier League",
+      "games": []
+    },
+    "Ipswich Town": {
+      "abbrev": "373",
+      "league": "Premier League",
+      "games": []
+    },
+    "Leicester City": {
+      "abbrev": "375",
+      "league": "Premier League",
+      "games": []
+    },
+    "Liverpool": {
+      "abbrev": "364",
+      "league": "Premier League",
+      "games": []
+    },
+    "Manchester City": {
+      "abbrev": "382",
+      "league": "Premier League",
+      "games": []
+    },
+    "Manchester United": {
+      "abbrev": "360",
+      "league": "Premier League",
+      "games": []
+    },
+    "Newcastle United": {
+      "abbrev": "361",
+      "league": "Premier League",
+      "games": []
+    },
+    "Nottingham Forest": {
+      "abbrev": "393",
+      "league": "Premier League",
+      "games": []
+    },
+    "Southampton": {
+      "abbrev": "376",
+      "league": "Premier League",
+      "games": []
+    },
+    "Tottenham": {
+      "abbrev": "367",
+      "league": "Premier League",
+      "games": []
+    },
+    "West Ham": {
+      "abbrev": "371",
+      "league": "Premier League",
+      "games": []
+    },
+    "Wolverhampton": {
+      "abbrev": "380",
+      "league": "Premier League",
+      "games": []
+    },
+    "Athletic Bilbao": {
+      "abbrev": "621",
+      "league": "La Liga",
+      "games": []
+    },
+    "Atletico Madrid": {
+      "abbrev": "1068",
+      "league": "La Liga",
+      "games": []
+    },
+    "Barcelona": {
+      "abbrev": "83",
+      "league": "La Liga",
+      "games": []
+    },
+    "Celta Vigo": {
+      "abbrev": "558",
+      "league": "La Liga",
+      "games": []
+    },
+    "Getafe": {
+      "abbrev": "3302",
+      "league": "La Liga",
+      "games": []
+    },
+    "Girona": {
+      "abbrev": "9867",
+      "league": "La Liga",
+      "games": []
+    },
+    "Las Palmas": {
+      "abbrev": "2719",
+      "league": "La Liga",
+      "games": []
+    },
+    "Leganes": {
+      "abbrev": "2720",
+      "league": "La Liga",
+      "games": []
+    },
+    "Mallorca": {
+      "abbrev": "714",
+      "league": "La Liga",
+      "games": []
+    },
+    "Osasuna": {
+      "abbrev": "2817",
+      "league": "La Liga",
+      "games": []
+    },
+    "Rayo Vallecano": {
+      "abbrev": "858",
+      "league": "La Liga",
+      "games": []
+    },
+    "Real Betis": {
+      "abbrev": "244",
+      "league": "La Liga",
+      "games": []
+    },
+    "Real Madrid": {
+      "abbrev": "86",
+      "league": "La Liga",
+      "games": []
+    },
+    "Real Sociedad": {
+      "abbrev": "243",
+      "league": "La Liga",
+      "games": []
+    },
+    "Real Valladolid": {
+      "abbrev": "94",
+      "league": "La Liga",
+      "games": []
+    },
+    "Sevilla": {
+      "abbrev": "559",
+      "league": "La Liga",
+      "games": []
+    },
+    "Valencia": {
+      "abbrev": "95",
+      "league": "La Liga",
+      "games": []
+    },
+    "Villarreal": {
+      "abbrev": "102",
+      "league": "La Liga",
+      "games": []
+    },
+    "Espanyol": {
+      "abbrev": "93",
+      "league": "La Liga",
+      "games": []
+    },
+    "Alaves": {
+      "abbrev": "97",
+      "league": "La Liga",
+      "games": []
+    },
+    "AC Milan": {
+      "abbrev": "103",
+      "league": "Serie A",
+      "games": []
+    },
+    "Atalanta": {
+      "abbrev": "104",
+      "league": "Serie A",
+      "games": []
+    },
+    "Bologna": {
+      "abbrev": "1913",
+      "league": "Serie A",
+      "games": []
+    },
+    "Cagliari": {
+      "abbrev": "1863",
+      "league": "Serie A",
+      "games": []
+    },
+    "Como": {
+      "abbrev": "5766",
+      "league": "Serie A",
+      "games": []
+    },
+    "Empoli": {
+      "abbrev": "2282",
+      "league": "Serie A",
+      "games": []
+    },
+    "Fiorentina": {
+      "abbrev": "107",
+      "league": "Serie A",
+      "games": []
+    },
+    "Genoa": {
+      "abbrev": "110",
+      "league": "Serie A",
+      "games": []
+    },
+    "Inter Milan": {
+      "abbrev": "108",
+      "league": "Serie A",
+      "games": []
+    },
+    "Juventus": {
+      "abbrev": "111",
+      "league": "Serie A",
+      "games": []
+    },
+    "Lazio": {
+      "abbrev": "112",
+      "league": "Serie A",
+      "games": []
+    },
+    "Lecce": {
+      "abbrev": "2284",
+      "league": "Serie A",
+      "games": []
+    },
+    "Monza": {
+      "abbrev": "11025",
+      "league": "Serie A",
+      "games": []
+    },
+    "Napoli": {
+      "abbrev": "113",
+      "league": "Serie A",
+      "games": []
+    },
+    "Parma": {
+      "abbrev": "2285",
+      "league": "Serie A",
+      "games": []
+    },
+    "Roma": {
+      "abbrev": "114",
+      "league": "Serie A",
+      "games": []
+    },
+    "Torino": {
+      "abbrev": "115",
+      "league": "Serie A",
+      "games": []
+    },
+    "Udinese": {
+      "abbrev": "116",
+      "league": "Serie A",
+      "games": []
+    },
+    "Venezia": {
+      "abbrev": "2425",
+      "league": "Serie A",
+      "games": []
+    },
+    "Verona": {
+      "abbrev": "117",
+      "league": "Serie A",
+      "games": []
+    },
+    "Augsburg": {
+      "abbrev": "132",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Bayern Munich": {
+      "abbrev": "131",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Bochum": {
+      "abbrev": "133",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Borussia Dortmund": {
+      "abbrev": "134",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Borussia Monchengladbach": {
+      "abbrev": "135",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Eintracht Frankfurt": {
+      "abbrev": "137",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "FC Heidenheim": {
+      "abbrev": "10280",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Freiburg": {
+      "abbrev": "138",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Hoffenheim": {
+      "abbrev": "2204",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Holstein Kiel": {
+      "abbrev": "197",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Leverkusen": {
+      "abbrev": "141",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Mainz": {
+      "abbrev": "2225",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "RB Leipzig": {
+      "abbrev": "4331",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "St. Pauli": {
+      "abbrev": "2534",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Stuttgart": {
+      "abbrev": "146",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Union Berlin": {
+      "abbrev": "2257",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Werder Bremen": {
+      "abbrev": "148",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Wolfsburg": {
+      "abbrev": "149",
+      "league": "Bundesliga",
+      "games": []
+    },
+    "Angers": {
+      "abbrev": "2573",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Auxerre": {
+      "abbrev": "165",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Brest": {
+      "abbrev": "6997",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Le Havre": {
+      "abbrev": "172",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Lens": {
+      "abbrev": "173",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Lille": {
+      "abbrev": "174",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Lyon": {
+      "abbrev": "176",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Marseille": {
+      "abbrev": "177",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Monaco": {
+      "abbrev": "178",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Montpellier": {
+      "abbrev": "179",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Nantes": {
+      "abbrev": "180",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Nice": {
+      "abbrev": "181",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Paris Saint-Germain": {
+      "abbrev": "182",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Reims": {
+      "abbrev": "3243",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Rennes": {
+      "abbrev": "184",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Saint-Etienne": {
+      "abbrev": "185",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Strasbourg": {
+      "abbrev": "3252",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Toulouse": {
+      "abbrev": "188",
+      "league": "Ligue 1",
+      "games": []
+    },
+    "Atlanta United": {
+      "abbrev": "9781",
+      "league": "MLS",
+      "games": []
+    },
+    "Austin FC": {
+      "abbrev": "12536",
+      "league": "MLS",
+      "games": []
+    },
+    "Charlotte FC": {
+      "abbrev": "13796",
+      "league": "MLS",
+      "games": []
+    },
+    "Chicago Fire": {
+      "abbrev": "1100",
+      "league": "MLS",
+      "games": []
+    },
+    "Colorado Rapids": {
+      "abbrev": "1102",
+      "league": "MLS",
+      "games": []
+    },
+    "Columbus Crew": {
+      "abbrev": "1101",
+      "league": "MLS",
+      "games": []
+    },
+    "DC United": {
+      "abbrev": "1103",
+      "league": "MLS",
+      "games": []
+    },
+    "FC Cincinnati": {
+      "abbrev": "11134",
+      "league": "MLS",
+      "games": []
+    },
+    "FC Dallas": {
+      "abbrev": "1104",
+      "league": "MLS",
+      "games": []
+    },
+    "Houston Dynamo": {
+      "abbrev": "9776",
+      "league": "MLS",
+      "games": []
+    },
+    "Inter Miami": {
+      "abbrev": "11140",
+      "league": "MLS",
+      "games": []
+    },
+    "LA Galaxy": {
+      "abbrev": "1105",
+      "league": "MLS",
+      "games": []
+    },
+    "LAFC": {
+      "abbrev": "11149",
+      "league": "MLS",
+      "games": []
+    },
+    "Minnesota United": {
+      "abbrev": "9789",
+      "league": "MLS",
+      "games": []
+    },
+    "Montreal": {
+      "abbrev": "9796",
+      "league": "MLS",
+      "games": []
+    },
+    "Nashville SC": {
+      "abbrev": "11922",
+      "league": "MLS",
+      "games": []
+    },
+    "New England Revolution": {
+      "abbrev": "1106",
+      "league": "MLS",
+      "games": []
+    },
+    "New York City FC": {
+      "abbrev": "9668",
+      "league": "MLS",
+      "games": []
+    },
+    "New York Red Bulls": {
+      "abbrev": "9772",
+      "league": "MLS",
+      "games": []
+    },
+    "Orlando City": {
+      "abbrev": "9752",
+      "league": "MLS",
+      "games": []
+    },
+    "Philadelphia Union": {
+      "abbrev": "9773",
+      "league": "MLS",
+      "games": []
+    },
+    "Portland Timbers": {
+      "abbrev": "9779",
+      "league": "MLS",
+      "games": []
+    },
+    "Real Salt Lake": {
+      "abbrev": "9784",
+      "league": "MLS",
+      "games": []
+    },
+    "San Jose Earthquakes": {
+      "abbrev": "1107",
+      "league": "MLS",
+      "games": []
+    },
+    "Seattle Sounders": {
+      "abbrev": "9726",
+      "league": "MLS",
+      "games": []
+    },
+    "Sporting Kansas City": {
+      "abbrev": "9797",
+      "league": "MLS",
+      "games": []
+    },
+    "St. Louis City": {
+      "abbrev": "16331",
+      "league": "MLS",
+      "games": []
+    },
+    "Toronto FC": {
+      "abbrev": "9788",
+      "league": "MLS",
+      "games": []
+    },
+    "Vancouver Whitecaps": {
+      "abbrev": "9778",
+      "league": "MLS",
+      "games": []
+    },
+    "America": {
+      "abbrev": "189",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Atlas": {
+      "abbrev": "190",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Atletico San Luis": {
+      "abbrev": "191",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Cruz Azul": {
+      "abbrev": "192",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Guadalajara": {
+      "abbrev": "193",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Juarez": {
+      "abbrev": "5826",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Leon": {
+      "abbrev": "5533",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Mazatlan": {
+      "abbrev": "11922",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Monterrey": {
+      "abbrev": "194",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Necaxa": {
+      "abbrev": "195",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Pachuca": {
+      "abbrev": "196",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Puebla": {
+      "abbrev": "2278",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Pumas UNAM": {
+      "abbrev": "198",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Queretaro": {
+      "abbrev": "4234",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Santos Laguna": {
+      "abbrev": "2672",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Tijuana": {
+      "abbrev": "3801",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Tigres UANL": {
+      "abbrev": "2283",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Toluca": {
+      "abbrev": "2672",
+      "league": "Liga MX",
+      "games": []
+    },
+    "Angel City": {
+      "abbrev": "14260",
+      "league": "NWSL",
+      "games": []
+    },
+    "Bay FC": {
+      "abbrev": "16552",
+      "league": "NWSL",
+      "games": []
+    },
+    "Chicago Red Stars": {
+      "abbrev": "12558",
+      "league": "NWSL",
+      "games": []
+    },
+    "Houston Dash": {
+      "abbrev": "12557",
+      "league": "NWSL",
+      "games": []
+    },
+    "Kansas City Current": {
+      "abbrev": "12559",
+      "league": "NWSL",
+      "games": []
+    },
+    "NJ/NY Gotham FC": {
+      "abbrev": "12560",
+      "league": "NWSL",
+      "games": []
+    },
+    "North Carolina Courage": {
+      "abbrev": "12561",
+      "league": "NWSL",
+      "games": []
+    },
+    "Orlando Pride": {
+      "abbrev": "12562",
+      "league": "NWSL",
+      "games": []
+    },
+    "Portland Thorns": {
+      "abbrev": "12563",
+      "league": "NWSL",
+      "games": []
+    },
+    "Racing Louisville": {
+      "abbrev": "12831",
+      "league": "NWSL",
+      "games": []
+    },
+    "San Diego Wave": {
+      "abbrev": "14261",
+      "league": "NWSL",
+      "games": []
+    },
+    "Seattle Reign": {
+      "abbrev": "12564",
+      "league": "NWSL",
+      "games": []
+    },
+    "Utah Royals": {
+      "abbrev": "16553",
+      "league": "NWSL",
+      "games": []
+    },
+    "Washington Spirit": {
+      "abbrev": "12565",
+      "league": "NWSL",
+      "games": []
+    },
+    "Atlanta Dream": {
+      "abbrev": "atl",
+      "league": "WNBA",
+      "games": []
+    },
+    "Chicago Sky": {
+      "abbrev": "chi",
+      "league": "WNBA",
+      "games": []
+    },
+    "Connecticut Sun": {
+      "abbrev": "conn",
+      "league": "WNBA",
+      "games": []
+    },
+    "Dallas Wings": {
+      "abbrev": "dal",
+      "league": "WNBA",
+      "games": []
+    },
+    "Golden State Valkyries": {
+      "abbrev": "gs",
+      "league": "WNBA",
+      "games": []
+    },
+    "Indiana Fever": {
+      "abbrev": "ind",
+      "league": "WNBA",
+      "games": []
+    },
+    "Las Vegas Aces": {
+      "abbrev": "lv",
+      "league": "WNBA",
+      "games": []
+    },
+    "Los Angeles Sparks": {
+      "abbrev": "la",
+      "league": "WNBA",
+      "games": []
+    },
+    "Minnesota Lynx": {
+      "abbrev": "min",
+      "league": "WNBA",
+      "games": []
+    },
+    "New York Liberty": {
+      "abbrev": "ny",
+      "league": "WNBA",
+      "games": []
+    },
+    "Phoenix Mercury": {
+      "abbrev": "phx",
+      "league": "WNBA",
+      "games": []
+    },
+    "Seattle Storm": {
+      "abbrev": "sea",
+      "league": "WNBA",
+      "games": []
+    },
+    "Washington Mystics": {
+      "abbrev": "wsh",
+      "league": "WNBA",
+      "games": []
+    },
+    "Abbotsford Canucks": {
+      "abbrev": "ABO",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Bakersfield Condors": {
+      "abbrev": "BAK",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Belleville Senators": {
+      "abbrev": "BEL",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Calgary Wranglers": {
+      "abbrev": "CGY",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Charlotte Checkers": {
+      "abbrev": "CHA",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Chicago Wolves": {
+      "abbrev": "CHI",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Cleveland Monsters": {
+      "abbrev": "CLE",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Coachella Valley Firebirds": {
+      "abbrev": "COA",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Colorado Eagles": {
+      "abbrev": "COL",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Grand Rapids Griffins": {
+      "abbrev": "GRA",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Hartford Wolf Pack": {
+      "abbrev": "HAR",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Henderson Silver Knights": {
+      "abbrev": "HEN",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Hershey Bears": {
+      "abbrev": "HER",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Iowa Wild": {
+      "abbrev": "IOW",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Laval Rocket": {
+      "abbrev": "LAV",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Lehigh Valley Phantoms": {
+      "abbrev": "LEH",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Manitoba Moose": {
+      "abbrev": "MAN",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Milwaukee Admirals": {
+      "abbrev": "MIL",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Ontario Reign": {
+      "abbrev": "ONT",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Providence Bruins": {
+      "abbrev": "PRO",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Rochester Americans": {
+      "abbrev": "ROC",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Rockford IceHogs": {
+      "abbrev": "ROK",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "San Diego Gulls": {
+      "abbrev": "SAN",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "San Jose Barracuda": {
+      "abbrev": "SJ",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Springfield Thunderbirds": {
+      "abbrev": "SPR",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Syracuse Crunch": {
+      "abbrev": "SYR",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Texas Stars": {
+      "abbrev": "TEX",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Toronto Marlies": {
+      "abbrev": "TOR",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Tucson Roadrunners": {
+      "abbrev": "TUC",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Utica Comets": {
+      "abbrev": "UTI",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Wilkes-Barre/Scranton Penguins": {
+      "abbrev": "WBS",
+      "league": "NHL (AHL)",
+      "games": []
+    },
+    "Atletico Ottawa": {
+      "abbrev": "ATL",
+      "league": "CPL",
+      "games": []
+    },
+    "Cavalry FC": {
+      "abbrev": "CAV",
+      "league": "CPL",
+      "games": []
+    },
+    "FC Edmonton": {
+      "abbrev": "EDM",
+      "league": "CPL",
+      "games": []
+    },
+    "Forge FC": {
+      "abbrev": "FOR",
+      "league": "CPL",
+      "games": []
+    },
+    "HFX Wanderers": {
+      "abbrev": "HFX",
+      "league": "CPL",
+      "games": []
+    },
+    "Pacific FC": {
+      "abbrev": "PAC",
+      "league": "CPL",
+      "games": []
+    },
+    "Valour FC": {
+      "abbrev": "VAL",
+      "league": "CPL",
+      "games": []
+    },
+    "Vancouver FC": {
+      "abbrev": "VAN",
+      "league": "CPL",
+      "games": []
+    },
+    "York United": {
+      "abbrev": "YOR",
+      "league": "CPL",
+      "games": []
+    },
+    "Boston Fleet": {
+      "abbrev": "BOS",
+      "league": "PWHL",
+      "games": []
+    },
+    "Minnesota Frost": {
+      "abbrev": "MIN",
+      "league": "PWHL",
+      "games": []
+    },
+    "Montreal Victoire": {
+      "abbrev": "MTL",
+      "league": "PWHL",
+      "games": []
+    },
+    "New York Sirens": {
+      "abbrev": "NY",
+      "league": "PWHL",
+      "games": []
+    },
+    "Ottawa Charge": {
+      "abbrev": "OTT",
+      "league": "PWHL",
+      "games": []
+    },
+    "Toronto Sceptres": {
+      "abbrev": "TOR",
+      "league": "PWHL",
+      "games": []
+    }
+  }
+}
