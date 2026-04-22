@@ -63,23 +63,27 @@ export function isCompleted(status: string): boolean {
 export function leagueColor(league: string): string {
   const colors: Record<string, string> = {
     NHL: '#0a84ff',
-    MLB: '#c0392b',
+    MLB: '#c41e3a',
     NBA: '#f97316',
-    NFL: '#1e3a8a',
+    NFL: '#013369',
     MLS: '#00aadd',
-    WNBA: '#ff6b9d',
-    CFL: '#c0392b',
+    WNBA: '#fd5a1e',
+    NWSL: '#6366f1',
+    CFL: '#e67e22',
     WHL: '#f59e0b',
-    'Premier League': '#3d0f56',
+    CEBL: '#fbbf24',
+    CPL: '#e63946',
+    PWHL: '#a78bfa',
+    'NHL (AHL)': '#5b9bd5',
+    'Premier League': '#6c1d8e',
     'La Liga': '#ef4444',
     'Serie A': '#007bc2',
     Bundesliga: '#e00000',
-    'Ligue 1': '#004170',
+    'Ligue 1': '#1d4ed8',
     'Champions League': '#003b8e',
     'Liga MX': '#16a34a',
-    CEBL: '#f59e0b',
   }
-  return colors[league] ?? '#6b7280'
+  return colors[league] ?? '#71717a'
 }
 
 export function leagueShort(league: string): string {

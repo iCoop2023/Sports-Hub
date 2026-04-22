@@ -7,12 +7,13 @@ import { teamPath, leagueColor } from '@/lib/utils'
 import LeagueBadge from '@/components/LeagueBadge'
 import TeamLogo from '@/components/TeamLogo'
 
-export default function SearchPage() {
+export default function ManagePage() {
   const [query, setQuery] = useState('')
   const [allTeams, setAllTeams] = useState<TeamSummary[]>([])
-  const [myTeams, setMyTeams] = useState<Set<string>>(new Set())
+  const [myTeams, setMyTeams] = useState<TeamSummary[]>([])
   const [adding, setAdding] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [expandedLeagues, setExpandedLeagues] = useState<Set<string>>(new Set())
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -22,19 +23,20 @@ export default function SearchPage() {
     ])
       .then(([teams, settings]) => {
         const list: TeamSummary[] = Array.isArray(teams) ? teams : teams.teams ?? []
-        const saved: TeamSummary[] = settings.teams ?? settings ?? []
+        const saved: TeamSummary[] = settings.teams ?? []
         setAllTeams(list)
-        setMyTeams(new Set(saved.map((t: TeamSummary) => t.name)))
+        setMyTeams(saved)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
 
-    // Auto-focus search
     setTimeout(() => inputRef.current?.focus(), 100)
   }, [])
 
-  const results = useMemo(() => {
-    if (!query.trim()) return allTeams
+  const myTeamNames = useMemo(() => new Set(myTeams.map((t) => t.name)), [myTeams])
+
+  const searchResults = useMemo(() => {
+    if (!query.trim()) return []
     const q = query.toLowerCase()
     return allTeams
       .filter(
@@ -43,85 +45,87 @@ export default function SearchPage() {
           t.league.toLowerCase().includes(q) ||
           t.abbrev?.toLowerCase().includes(q)
       )
-      .slice(0, 40)
+      .slice(0, 50)
   }, [query, allTeams])
 
-  async function addTeam(team: TeamSummary) {
-    if (myTeams.has(team.name)) {
-      // Remove
-      const settings = await fetch('/api/settings').then((r) => r.json())
-      const current: TeamSummary[] = settings.teams ?? []
-      const updated = current.filter((t) => t.name !== team.name)
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teams: updated }),
-      })
-      setMyTeams((prev) => {
-        const next = new Set(prev)
-        next.delete(team.name)
-        return next
-      })
-      return
+  // Teams not yet added, grouped by league for browsing
+  const browseGroups = useMemo(() => {
+    if (query.trim()) return null
+    const notAdded = allTeams.filter((t) => !myTeamNames.has(t.name))
+    const map = new Map<string, TeamSummary[]>()
+    for (const t of notAdded) {
+      if (!map.has(t.league)) map.set(t.league, [])
+      map.get(t.league)!.push(t)
     }
+    return map
+  }, [query, allTeams, myTeamNames])
 
+  async function saveTeams(updated: TeamSummary[]) {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teams: updated }),
+    })
+  }
+
+  async function addTeam(team: TeamSummary) {
+    if (myTeamNames.has(team.name)) return
     setAdding((prev) => new Set(prev).add(team.name))
     try {
-      const settings = await fetch('/api/settings').then((r) => r.json())
-      const current: TeamSummary[] = settings.teams ?? []
-      const updated = [...current, team]
+      const updated = [...myTeams, team]
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teams: updated }),
       })
       if (res.ok) {
-        setMyTeams((prev) => new Set(prev).add(team.name))
-        // Also trigger a background fetch for this new team
-        fetch(`/api/team/fetch`, {
+        setMyTeams(updated)
+        fetch('/api/team/fetch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ team_name: team.name, league: team.league }),
         }).catch(() => {})
       }
     } finally {
-      setAdding((prev) => {
-        const next = new Set(prev)
-        next.delete(team.name)
-        return next
-      })
+      setAdding((prev) => { const n = new Set(prev); n.delete(team.name); return n })
     }
   }
 
-  // Group by league for display
-  const grouped = useMemo(() => {
-    if (query.trim()) return null
-    const map = new Map<string, TeamSummary[]>()
-    for (const t of results) {
-      if (!map.has(t.league)) map.set(t.league, [])
-      map.get(t.league)!.push(t)
-    }
-    return map
-  }, [query, results])
+  async function removeTeam(team: TeamSummary) {
+    const updated = myTeams.filter((t) => t.name !== team.name)
+    setMyTeams(updated)
+    await saveTeams(updated)
+  }
+
+  function toggleLeague(league: string) {
+    setExpandedLeagues((prev) => {
+      const next = new Set(prev)
+      if (next.has(league)) next.delete(league)
+      else next.add(league)
+      return next
+    })
+  }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ background: '#09090b' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/[0.06]">
+      <header
+        className="sticky top-0 z-40 border-b"
+        style={{ background: 'rgba(9,9,11,0.88)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.07)' }}
+      >
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-          <Link href="/" className="text-zinc-400 hover:text-white transition-colors shrink-0">
+          <Link href="/" className="text-zinc-500 hover:text-white transition-colors shrink-0 p-1 -ml-1">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
           <div className="flex-1 relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+              style={{ color: '#52525b' }}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
             <input
               ref={inputRef}
@@ -129,77 +133,138 @@ export default function SearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search any team or league..."
-              className="w-full bg-white/[0.08] text-white placeholder-zinc-500 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/60 border border-white/[0.06]"
+              className="w-full text-white placeholder-zinc-600 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}
             />
           </div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-4">
+      <main className="max-w-2xl mx-auto px-4 py-5 space-y-8">
         {loading && (
           <div className="flex justify-center py-16">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
-        {!loading && allTeams.length === 0 && (
-          <p className="text-zinc-500 text-center py-16 text-sm">Could not load teams. Try again later.</p>
-        )}
-
-        {/* Search results */}
+        {/* ── Search results ── */}
         {!loading && query.trim() && (
-          <div>
-            <p className="text-zinc-500 text-xs mb-3">
-              {results.length} result{results.length !== 1 ? 's' : ''} for &quot;{query}&quot;
+          <section>
+            <p className="text-zinc-600 text-xs mb-3">
+              {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;
             </p>
             <div className="flex flex-col gap-2">
-              {results.map((team) => (
+              {searchResults.map((team) => (
                 <TeamRow
                   key={team.name}
                   team={team}
-                  added={myTeams.has(team.name)}
+                  added={myTeamNames.has(team.name)}
                   adding={adding.has(team.name)}
-                  onToggle={() => addTeam(team)}
+                  onAdd={() => addTeam(team)}
+                  onRemove={() => removeTeam(team)}
                 />
               ))}
-              {results.length === 0 && (
-                <p className="text-zinc-500 text-sm text-center py-10">No teams found</p>
+              {searchResults.length === 0 && (
+                <p className="text-zinc-600 text-sm text-center py-10">No teams found</p>
               )}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Browse by league */}
-        {!loading && !query.trim() && grouped && (
-          <div className="space-y-6">
-            <p className="text-zinc-500 text-xs">Browse all {allTeams.length} teams across {grouped.size} leagues</p>
-            {Array.from(grouped.entries()).map(([league, teams]) => (
-              <div key={league}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span
-                    className="text-xs font-bold"
-                    style={{ color: leagueColor(league) }}
-                  >
-                    {league}
-                  </span>
-                  <span className="text-zinc-700 text-xs">({teams.length})</span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {teams.map((team) => (
-                    <TeamRow
-                      key={team.name}
-                      team={team}
-                      added={myTeams.has(team.name)}
-                      adding={adding.has(team.name)}
-                      onToggle={() => addTeam(team)}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* ── My Teams ── */}
+        {!loading && !query.trim() && myTeams.length > 0 && (
+          <section>
+            <SectionHeader label="My Teams" count={myTeams.length} />
+            <div className="flex flex-col gap-1.5">
+              {myTeams.map((team) => (
+                <TeamRow
+                  key={team.name}
+                  team={team}
+                  added
+                  adding={false}
+                  onAdd={() => {}}
+                  onRemove={() => removeTeam(team)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Browse to Add ── */}
+        {!loading && !query.trim() && browseGroups && browseGroups.size > 0 && (
+          <section>
+            <SectionHeader
+              label="Add Teams"
+              count={Array.from(browseGroups.values()).reduce((s, a) => s + a.length, 0)}
+            />
+            <div className="flex flex-col gap-1.5">
+              {Array.from(browseGroups.entries())
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([league, teams]) => {
+                  const isOpen = expandedLeagues.has(league)
+                  const color = leagueColor(league)
+                  return (
+                    <div
+                      key={league}
+                      className="rounded-xl overflow-hidden"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                    >
+                      <button
+                        onClick={() => toggleLeague(league)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.03] transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                          <span className="text-white text-sm font-semibold">{league}</span>
+                          <span className="text-zinc-600 text-xs">{teams.length}</span>
+                        </div>
+                        <svg
+                          className={`w-4 h-4 text-zinc-600 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {isOpen && (
+                        <div className="border-t border-white/[0.05] flex flex-col gap-1 p-2">
+                          {teams.map((team) => (
+                            <TeamRow
+                              key={team.name}
+                              team={team}
+                              added={false}
+                              adding={adding.has(team.name)}
+                              onAdd={() => addTeam(team)}
+                              onRemove={() => {}}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+            </div>
+          </section>
+        )}
+
+        {/* All caught up */}
+        {!loading && !query.trim() && myTeams.length > 0 && browseGroups?.size === 0 && (
+          <p className="text-center text-zinc-600 text-sm py-4">You&apos;re following every team!</p>
         )}
       </main>
+    </div>
+  )
+}
+
+function SectionHeader({ label, count }: { label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <h2 className="text-white font-bold text-sm">{label}</h2>
+      <span
+        className="text-[11px] font-bold px-1.5 py-0.5 rounded-md"
+        style={{ background: 'rgba(255,255,255,0.08)', color: '#71717a' }}
+      >
+        {count}
+      </span>
     </div>
   )
 }
@@ -208,40 +273,49 @@ function TeamRow({
   team,
   added,
   adding,
-  onToggle,
+  onAdd,
+  onRemove,
 }: {
   team: TeamSummary
   added: boolean
   adding: boolean
-  onToggle: () => void
+  onAdd: () => void
+  onRemove: () => void
 }) {
   return (
     <div
-      className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
     >
       <Link href={teamPath(team)} className="flex items-center gap-3 flex-1 min-w-0 group">
         <TeamLogo abbrev={team.abbrev} league={team.league} size={36} />
         <div className="min-w-0">
-          <div className="text-white text-sm font-semibold truncate group-hover:text-blue-400 transition-colors">
+          <p className="text-white text-sm font-semibold truncate group-hover:text-blue-400 transition-colors">
             {team.name}
-          </div>
-          <div className="mt-0.5">
-            <LeagueBadge league={team.league} size="sm" />
-          </div>
+          </p>
+          <LeagueBadge league={team.league} size="sm" />
         </div>
       </Link>
-      <button
-        onClick={(e) => { e.preventDefault(); onToggle() }}
-        disabled={adding}
-        className={`ml-3 shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
-          added
-            ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30'
-            : 'bg-blue-600 text-white hover:bg-blue-500'
-        } ${adding ? 'opacity-50 cursor-wait' : ''}`}
-      >
-        {adding ? '...' : added ? '✓ Added' : '+ Add'}
-      </button>
+
+      {added ? (
+        <button
+          onClick={(e) => { e.preventDefault(); onRemove() }}
+          className="ml-2 shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30"
+          style={{ background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }}
+          title="Remove team"
+        >
+          ✓ Added
+        </button>
+      ) : (
+        <button
+          onClick={(e) => { e.preventDefault(); onAdd() }}
+          disabled={adding}
+          className={`ml-2 shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-all text-white ${adding ? 'opacity-50 cursor-wait' : 'hover:opacity-90'}`}
+          style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}
+        >
+          {adding ? '…' : '+ Add'}
+        </button>
+      )}
     </div>
   )
 }

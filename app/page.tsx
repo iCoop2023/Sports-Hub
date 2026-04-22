@@ -2,54 +2,53 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import type { Team, Game } from '@/lib/types'
-import { isLive, leagueColor, calcRecord, recordStr, teamPath, formatGameDate } from '@/lib/utils'
-import TeamLogo from '@/components/TeamLogo'
+import type { Team, TeamSummary } from '@/lib/types'
+import { isLive } from '@/lib/utils'
+import TeamCard from '@/components/TeamCard'
 
-function hasLiveGame(teams: Team[]): boolean {
-  return teams.some((t) =>
-    [...(t.recent_games ?? []), ...(t.games ?? [])].some((g) => isLive(g.status))
-  )
+function hasLiveGames(picked: TeamSummary[], map: Record<string, Team>): boolean {
+  return picked.some((s) => {
+    const d = map[s.name]
+    if (!d) return false
+    return [...(d.recent_games ?? []), ...(d.games ?? [])].some((g) => isLive(g.status))
+  })
 }
 
-function getBestGame(team: Team): { game: Game; label: string } | null {
-  const all = [...(team.recent_games ?? []), ...(team.games ?? [])]
-  const live = all.find((g) => isLive(g.status))
-  if (live) return { game: live, label: 'LIVE' }
-  const upcoming = team.upcoming_games?.[0]
-  if (upcoming) return { game: upcoming, label: formatGameDate(upcoming.date) }
-  const completed = all.filter((g) => ['W', 'L', 'T'].includes((g.result ?? '').toUpperCase()))
-  const last = completed[completed.length - 1]
-  if (last) return { game: last, label: formatGameDate(last.date) }
-  return null
-}
-
-function SkeletonLeague() {
+function SkeletonCard() {
   return (
     <div
-      className="h-12 rounded-2xl animate-pulse"
-      style={{ background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}
+      className="rounded-2xl h-40 animate-pulse"
+      style={{ background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.06)' }}
     />
   )
 }
 
 export default function Dashboard() {
-  const [teams, setTeams] = useState<Team[]>([])
+  const [myTeams, setMyTeams] = useState<TeamSummary[]>([])
+  const [teamData, setTeamData] = useState<Record<string, Team>>({})
   const [loading, setLoading] = useState(true)
   const [live, setLive] = useState(false)
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/dashboard', { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        const fetched: Team[] = data.teams ?? []
-        setTeams(fetched)
-        setLive(hasLiveGame(fetched))
-      }
+      const [settingsRes, dashRes] = await Promise.all([
+        fetch('/api/settings', { cache: 'no-store' }),
+        fetch('/api/dashboard', { cache: 'no-store' }),
+      ])
+      const settings = settingsRes.ok ? await settingsRes.json() : {}
+      const dash = dashRes.ok ? await dashRes.json() : {}
+
+      const picked: TeamSummary[] = settings.teams ?? []
+      const allData: Team[] = dash.teams ?? []
+
+      const map: Record<string, Team> = {}
+      for (const t of allData) map[t.name] = t
+
+      setMyTeams(picked)
+      setTeamData(map)
+      setLive(hasLiveGames(picked, map))
     } catch {
-      // keep showing last data
+      // retain stale state
     } finally {
       setLoading(false)
     }
@@ -62,169 +61,94 @@ export default function Dashboard() {
     return () => clearInterval(interval)
   }, [live, load])
 
-  // Group teams by league, preserving cache order within each league
-  const leagueGroups: Record<string, Team[]> = {}
-  for (const team of teams) {
-    const league = team.league || 'Other'
-    if (!leagueGroups[league]) leagueGroups[league] = []
-    leagueGroups[league].push(team)
-  }
-  const leagues = Object.keys(leagueGroups).sort((a, b) => a.localeCompare(b))
-
-  function toggleLeague(league: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(league)) next.delete(league)
-      else next.add(league)
-      return next
-    })
-  }
-
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ background: '#09090b' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/[0.06]">
+      <header
+        className="sticky top-0 z-40 border-b"
+        style={{ background: 'rgba(9,9,11,0.88)', backdropFilter: 'blur(16px)', borderColor: 'rgba(255,255,255,0.07)' }}
+      >
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="text-lg font-black tracking-tight">⚡ Sports Hub</span>
+            <span className="text-base font-black tracking-tight text-white">Sports Hub</span>
             {live && (
-              <span className="flex items-center gap-1 text-[10px] font-bold text-orange-400 bg-orange-500/15 border border-orange-500/25 px-1.5 py-0.5 rounded">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse inline-block" />
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-black tracking-wider text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
                 LIVE
               </span>
             )}
           </div>
           <Link
             href="/search"
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors bg-white/[0.06] hover:bg-white/[0.1] px-3 py-1.5 rounded-full"
+            className="text-sm font-semibold text-zinc-300 hover:text-white transition-colors px-3 py-1.5 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-            </svg>
-            Manage
+            + Manage
           </Link>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {/* Loading skeletons */}
         {loading && (
-          <div className="flex flex-col gap-2">
-            {[1, 2, 3, 4, 5].map((i) => <SkeletonLeague key={i} />)}
+          <div className="flex flex-col gap-4">
+            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
         )}
 
-        {/* Empty state */}
-        {!loading && teams.length === 0 && (
-          <div className="text-center py-24">
-            <div className="text-5xl mb-4">🏆</div>
-            <h2 className="text-white font-bold text-xl mb-2">Welcome to Sports Hub</h2>
-            <p className="text-zinc-500 text-sm mb-6 max-w-xs mx-auto">
-              Track scores, schedules, and news for any team across 19+ leagues
+        {!loading && myTeams.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-28 text-center">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <svg className="w-8 h-8 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-white font-bold text-xl mb-2">Your dashboard is empty</h2>
+            <p className="text-zinc-500 text-sm mb-8 max-w-xs leading-relaxed">
+              Add teams from any league — NHL, NBA, NFL, MLB, soccer, and more — to track their scores and news here.
             </p>
             <Link
               href="/search"
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2.5 rounded-full transition-colors text-sm"
+              className="inline-flex items-center gap-2 text-sm font-bold text-white px-6 py-3 rounded-full transition-opacity hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
               Add Your Teams
             </Link>
           </div>
         )}
 
-        {/* League accordion */}
-        {!loading && teams.length > 0 && (
-          <div className="flex flex-col gap-6">
-            {/* Summary */}
-            <div>
-              <h1 className="text-2xl font-black text-white">Your Hub</h1>
-              <p className="text-zinc-500 text-sm mt-0.5">
-                {teams.length} teams · {leagues.length} leagues
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {leagues.map((league) => {
-                const leagueTeams = leagueGroups[league]
-                const isExpanded = expanded.has(league)
-                const color = leagueColor(league)
-
+        {!loading && myTeams.length > 0 && (
+          <div className="flex flex-col gap-4">
+            {myTeams.map((summary) => {
+              const data = teamData[summary.name]
+              if (!data) {
+                // Placeholder while data loads
                 return (
                   <div
-                    key={league}
-                    className="rounded-2xl overflow-hidden"
-                    style={{ background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}
+                    key={summary.name}
+                    className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
+                    style={{ background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.06)' }}
                   >
-                    {/* League header row */}
-                    <button
-                      onClick={() => toggleLeague(league)}
-                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ background: color }}
-                        />
-                        <span className="text-white font-semibold text-sm">{league}</span>
-                        <span className="text-zinc-600 text-xs">{leagueTeams.length}</span>
-                      </div>
-                      <svg
-                        className={`w-4 h-4 text-zinc-600 transition-transform duration-150 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-
-                    {/* Expanded team list */}
-                    {isExpanded && (
-                      <div className="border-t border-white/[0.05] divide-y divide-white/[0.04]">
-                        {leagueTeams.map((team) => {
-                          const allGames = [...(team.recent_games ?? []), ...(team.games ?? [])]
-                          const rec = calcRecord(allGames)
-                          const best = getBestGame(team)
-                          return (
-                            <Link
-                              key={team.name}
-                              href={teamPath(team)}
-                              className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.04] transition-colors"
-                            >
-                              <TeamLogo abbrev={team.abbrev} league={team.league} size={32} />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-white text-sm font-medium truncate">{team.name}</div>
-                                {best ? (
-                                  <div className="text-zinc-500 text-xs truncate">
-                                    {best.label === 'LIVE' ? (
-                                      <span className="text-orange-400 font-bold">
-                                        LIVE · {best.game.team_score}–{best.game.opponent_score} vs {best.game.opponent}
-                                      </span>
-                                    ) : (
-                                      <span>{best.label} vs {best.game.opponent}</span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="text-zinc-700 text-xs">No schedule data</div>
-                                )}
-                              </div>
-                              <span className="text-zinc-600 text-xs shrink-0 font-mono">{recordStr(rec)}</span>
-                            </Link>
-                          )
-                        })}
-                      </div>
-                    )}
+                    <div className="w-12 h-12 rounded-xl shrink-0 animate-pulse" style={{ background: 'rgba(255,255,255,0.07)' }} />
+                    <div className="flex-1">
+                      <div className="h-3.5 rounded w-36 mb-2 animate-pulse" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                      <div className="h-2.5 rounded w-20 animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                    </div>
                   </div>
                 )
-              })}
-            </div>
+              }
+              return <TeamCard key={data.name} team={data} />
+            })}
 
             <Link
               href="/search"
-              className="flex items-center justify-center gap-2 rounded-2xl py-4 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
-              style={{ border: '1px dashed rgba(255,255,255,0.12)' }}
+              className="flex items-center justify-center gap-2 rounded-2xl py-4 text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
+              style={{ border: '1px dashed rgba(255,255,255,0.1)' }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -234,8 +158,6 @@ export default function Dashboard() {
           </div>
         )}
       </main>
-
-      <div className="h-8" />
     </div>
   )
 }
