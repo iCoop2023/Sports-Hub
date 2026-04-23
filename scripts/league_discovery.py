@@ -153,7 +153,7 @@ LEAGUE_APIS = {
         }
     },
     "CFL": {
-        "schedule": "placeholder",  # Season not started
+        "schedule": "espn",
         "teams": {
             "BC Lions": "BC", "Calgary Stampeders": "CGY", "Edmonton Elks": "EDM",
             "Saskatchewan Roughriders": "SSK", "Winnipeg Blue Bombers": "WPG",
@@ -162,7 +162,7 @@ LEAGUE_APIS = {
         }
     },
     "CEBL": {
-        "schedule": "placeholder",  # Season not started
+        "schedule": "espn",
         "teams": {
             "Brampton Honey Badgers": "BRA", "Calgary Surge": "CGY",
             "Edmonton Stingers": "EDM", "Montreal Alliance": "MTL",
@@ -173,6 +173,7 @@ LEAGUE_APIS = {
     },
     "WHL": {
         "schedule": "hockeytech",
+        "client_code": "whl",
         "api_base": "https://lscluster.hockeytech.com/feed/index.php",
         "teams": {
             "Brandon Wheat Kings": "16", "Calgary Hitmen": "2", "Edmonton Oil Kings": "20",
@@ -303,7 +304,7 @@ LEAGUE_APIS = {
         }
     },
     "NHL (AHL)": {
-        "schedule": "placeholder",
+        "schedule": "espn",
         "teams": {
             "Abbotsford Canucks": "ABO", "Bakersfield Condors": "BAK", "Belleville Senators": "BEL",
             "Calgary Wranglers": "CGY", "Charlotte Checkers": "CHA", "Chicago Wolves": "CHI",
@@ -319,7 +320,7 @@ LEAGUE_APIS = {
         }
     },
     "CPL": {
-        "schedule": "placeholder",
+        "schedule": "espn",
         "teams": {
             "Atletico Ottawa": "ATL", "Cavalry FC": "CAV", "FC Edmonton": "EDM",
             "Forge FC": "FOR", "HFX Wanderers": "HFX", "Pacific FC": "PAC",
@@ -327,7 +328,7 @@ LEAGUE_APIS = {
         }
     },
     "PWHL": {
-        "schedule": "placeholder",
+        "schedule": "espn",
         "teams": {
             "Boston Fleet": "BOS", "Minnesota Frost": "MIN", "Montreal Victoire": "MTL",
             "New York Sirens": "NY", "Ottawa Charge": "OTT", "Toronto Sceptres": "TOR"
@@ -373,7 +374,7 @@ def fetch_team_schedule(team_name: str) -> Optional[List[Dict]]:
     elif config["schedule"] == "espn_soccer":
         return fetch_espn_soccer_schedule(team_name, abbrev, config.get("espn_league", ""))
     elif config["schedule"] == "hockeytech":
-        return fetch_hockeytech_schedule(team_name, abbrev)
+        return fetch_hockeytech_schedule(team_name, abbrev, config.get("client_code", "whl"))
 
     return []
 
@@ -583,10 +584,14 @@ def _fetch_espn_by_id(team_name: str, numeric_id: int, sport_path: str, league: 
 def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
     """Fetch schedule from ESPN API using hardcoded numeric IDs."""
     sport_map = {
-        "NBA": ("basketball/nba", ESPN_NBA_IDS),
-        "NFL": ("football/nfl",   ESPN_NFL_IDS),
-        "CFL": ("football/cfl",   {}),
-        "NHL": ("hockey/nhl",     {}),
+        "NBA":      ("basketball/nba",   ESPN_NBA_IDS),
+        "NFL":      ("football/nfl",     ESPN_NFL_IDS),
+        "CFL":      ("football/cfl",     {}),
+        "NHL":      ("hockey/nhl",       {}),
+        "NHL (AHL)":("hockey/ahl",       {}),
+        "PWHL":     ("hockey/pwhl",      {}),
+        "CEBL":     ("basketball/cebl",  {}),
+        "CPL":      ("soccer/can.1",     {}),
     }
     entry = sport_map.get(league)
     if not entry:
@@ -672,42 +677,71 @@ def fetch_espn_soccer_schedule(team_name: str, team_id: str, league_code: str) -
         return []
 
 
-def fetch_hockeytech_schedule(team_name: str, team_id: str) -> List[Dict]:
-    """Fetch WHL schedule via HockeyTech."""
-    url = "https://lscluster.hockeytech.com/feed/index.php"
-    params = {
-        "feed": "modulekit",
-        "view": "gamesbydate",
-        "key": os.environ.get("HOCKEYTECH_KEY_WHL", "41b145a848f4bd67"),
-        "fmt": "json",
-        "client_code": "whl",
-        "lang": "en",
-        "season_id": "79",
-        "team_id": team_id,
-        "fmt": "json"
-    }
-    
+_hockeytech_season_cache: Dict[str, str] = {}
+
+def _get_hockeytech_season(client_code: str, key: str) -> str:
+    """Return the current active HockeyTech season ID, cached per client."""
+    if client_code in _hockeytech_season_cache:
+        return _hockeytech_season_cache[client_code]
     try:
-        resp = requests.get(url, params=params, timeout=10)
+        resp = requests.get(
+            "https://lscluster.hockeytech.com/feed/index.php",
+            params={"feed": "modulekit", "view": "seasons", "key": key,
+                    "fmt": "json", "client_code": client_code, "lang": "en"},
+            timeout=8)
+        resp.raise_for_status()
+        seasons = resp.json().get("SiteKit", {}).get("Seasons", [])
+        # Prefer the season flagged active; fall back to the first entry
+        for s in seasons:
+            if str(s.get("active", "")) == "1":
+                sid = str(s.get("season_id", ""))
+                if sid:
+                    _hockeytech_season_cache[client_code] = sid
+                    return sid
+        if seasons:
+            sid = str(seasons[0].get("season_id", ""))
+            _hockeytech_season_cache[client_code] = sid
+            return sid
+    except Exception as e:
+        print(f"HockeyTech season lookup failed ({client_code}): {e}")
+    return "79"  # last-resort fallback
+
+
+def fetch_hockeytech_schedule(team_name: str, team_id: str, client_code: str = "whl") -> List[Dict]:
+    """Fetch schedule via HockeyTech (WHL and other junior/pro leagues)."""
+    key = os.environ.get("HOCKEYTECH_KEY_WHL", "41b145a848f4bd67")
+    season_id = _get_hockeytech_season(client_code, key)
+    try:
+        resp = requests.get(
+            "https://lscluster.hockeytech.com/feed/index.php",
+            params={
+                "feed": "modulekit", "view": "gamesbydate",
+                "key": key, "fmt": "json",
+                "client_code": client_code, "lang": "en",
+                "season_id": season_id, "team_id": team_id,
+            },
+            timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
         games = []
         for game in data.get("SiteKit", {}).get("Gamesbydate", []):
+            raw_date = game.get("date_with_day", "")
+            # HockeyTech returns dates as "YYYY-MM-DD" or "Day, Mon DD YYYY"
+            date = raw_date[:10] if raw_date and raw_date[4:5] == "-" else raw_date[:10]
             games.append({
                 "id": game.get("id"),
-                "date": game.get("date_with_day", "")[:10],
+                "date": date,
                 "opponent": game.get("opponent", ""),
-                "team_score": int(game.get("goals_for", 0)),
-                "opponent_score": int(game.get("goals_against", 0)),
+                "team_score": int(game.get("goals_for", 0) or 0),
+                "opponent_score": int(game.get("goals_against", 0) or 0),
                 "status": normalize_whl_status(game.get("game_status", "")),
                 "is_home": game.get("location", "") == "Home",
                 "result": get_whl_result(game),
-                "league": "WHL"
+                "league": client_code.upper(),
             })
         return games
     except Exception as e:
-        print(f"WHL fetch failed for {team_name}: {e}")
+        print(f"HockeyTech fetch failed for {team_name} ({client_code}): {e}")
         return []
 
 
