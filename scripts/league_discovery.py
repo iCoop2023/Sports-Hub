@@ -17,6 +17,25 @@ _BROWSER_HEADERS = {
     )
 }
 
+# Sports APIs return UTC datetimes. Games run until ~midnight PT (UTC-7/UTC-8),
+# so subtracting 8 hours before slicing gives the correct local calendar date
+# for all North American timezones without ever crossing into the next day.
+_NA_TZ_OFFSET = timedelta(hours=8)
+
+def _utc_to_na_date(utc_str: str) -> str:
+    """Return the North American calendar date for a UTC ISO datetime string."""
+    if not utc_str:
+        return ""
+    if "T" not in utc_str:
+        return utc_str[:10]
+    try:
+        # Strip any trailing Z or offset before parsing
+        clean = utc_str.replace("Z", "").split("+")[0]
+        dt = datetime.fromisoformat(clean) - _NA_TZ_OFFSET
+        return dt.strftime("%Y-%m-%d")
+    except Exception:
+        return utc_str[:10]
+
 # ---------------------------------------------------------------------------
 # Official MLB Stats API team IDs (free, no auth, very reliable)
 # ---------------------------------------------------------------------------
@@ -498,7 +517,7 @@ def fetch_mlb_schedule(team_name: str) -> List[Dict]:
 
                 games.append({
                     "id": str(game.get("gamePk", "")),
-                    "date": game.get("gameDate", "")[:10],
+                    "date": _utc_to_na_date(game.get("gameDate", "")),
                     "opponent": opp["team"].get("name", ""),
                     "team_score": my.get("score", 0) or 0,
                     "opponent_score": opp.get("score", 0) or 0,
@@ -546,7 +565,7 @@ def _fetch_espn_by_id(team_name: str, numeric_id: int, sport_path: str, league: 
 
             games.append({
                 "id": event["id"],
-                "date": event["date"][:10] if "T" in event.get("date", "") else event.get("date", ""),
+                "date": _utc_to_na_date(event.get("date", "")),
                 "opponent": opponent,
                 "team_score": home_score if is_home else away_score,
                 "opponent_score": away_score if is_home else home_score,
@@ -636,7 +655,7 @@ def fetch_espn_soccer_schedule(team_name: str, team_id: str, league_code: str) -
 
                 games.append({
                     "id": event.get("id"),
-                    "date": (event.get("date", ""))[:10],
+                    "date": _utc_to_na_date(event.get("date", "")),
                     "opponent": opponent,
                     "team_score": home_score if is_home else away_score,
                     "opponent_score": away_score if is_home else home_score,

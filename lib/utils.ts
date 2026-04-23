@@ -17,19 +17,20 @@ export function slugToName(slug: string): string {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function formatGameDate(dateStr: string): string {
   const date = new Date(`${dateStr}T12:00:00`)
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10)
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().slice(0, 10)
+  const now = new Date()
+  const todayStr = localDateStr(now)
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1)
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1)
 
   if (dateStr === todayStr) return 'Today'
-  if (dateStr === tomorrowStr) return 'Tomorrow'
-  if (dateStr === yesterdayStr) return 'Yesterday'
+  if (dateStr === localDateStr(tomorrow)) return 'Tomorrow'
+  if (dateStr === localDateStr(yesterday)) return 'Yesterday'
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
