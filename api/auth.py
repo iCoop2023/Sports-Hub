@@ -191,6 +191,69 @@ async def get_session(
         raise HTTPException(status_code=401, detail=f"Session invalid: {str(e)}")
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class UpdatePasswordRequest(BaseModel):
+    password: str
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute;10/hour")
+async def forgot_password(request: Request, body: ForgotPasswordRequest):
+    """Send a password reset email."""
+    if not SUPABASE_ENABLED:
+        raise HTTPException(status_code=503, detail="Auth not configured")
+
+    try:
+        supabase = get_supabase_client()
+        supabase.auth.reset_password_for_email(
+            body.email,
+            {"redirect_to": os.getenv("APP_URL", "https://sports-hub-sepia.vercel.app") + "/auth/reset-password"},
+        )
+    except Exception:
+        pass  # Never reveal whether the email exists
+    return {"status": "success", "message": "If that email is registered you'll receive a reset link."}
+
+
+@router.post("/update-password")
+async def update_password(
+    body: UpdatePasswordRequest,
+    sh_access_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = Header(None),
+):
+    """Update the authenticated user's password."""
+    if not SUPABASE_ENABLED:
+        raise HTTPException(status_code=503, detail="Auth not configured")
+
+    token = resolve_token(sh_access_token, authorization)
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    if len(body.password or "") < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    try:
+        from .supabase_client import get_supabase_admin
+    except Exception:
+        from supabase_client import get_supabase_admin
+
+    try:
+        supabase = get_supabase_client()
+        user_resp = supabase.auth.get_user(token)
+        user = user_resp.user if user_resp else None
+        if not user:
+            raise HTTPException(status_code=401, detail="Session expired — please restart the reset flow")
+        admin = get_supabase_admin()
+        admin.auth.admin.update_user_by_id(user.id, {"password": body.password})
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Password update failed: {str(e)}")
+
+
 @router.post("/callback", response_model=SessionResponse)
 async def auth_callback(
     response: Response,
