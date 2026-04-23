@@ -436,7 +436,11 @@ async def update_user_settings(
         except Exception as e:
             print(f"Supabase settings save failed: {e}")
     
-    # Fallback to local file
+    # Supabase enabled but no valid token → refuse the write (guest)
+    if SUPABASE_ENABLED:
+        raise HTTPException(status_code=401, detail="Sign in to save your teams")
+
+    # Supabase not configured (local dev) → file fallback
     save_user_settings(payload)
     return {
         "status": "ok",
@@ -500,10 +504,29 @@ def _cache_is_stale(games: List[Dict]) -> bool:
     )
 
 
+def _resolve_team_name(team_name: str, cache: dict) -> Optional[str]:
+    """Return the canonical name from cache, falling back to slug-fuzzy match."""
+    teams = cache.get("teams", {})
+    if team_name in teams:
+        return team_name
+    # Normalise: lowercase, drop punctuation, collapse spaces
+    def _norm(s: str) -> str:
+        import re
+        return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", "", s.lower())).strip()
+    needle = _norm(team_name)
+    for name in teams:
+        if _norm(name) == needle:
+            return name
+    return None
+
+
 @app.get("/api/team/{team_name}")
 async def get_team(team_name: str):
     """Get detailed data for a specific team."""
     data = load_cache()
+    canonical = _resolve_team_name(team_name, data)
+    if canonical and canonical != team_name:
+        team_name = canonical
     team_info = data.get("teams", {}).get(team_name)
     cached_games = team_info.get("games", []) if team_info else []
 
@@ -680,10 +703,14 @@ async def refresh_status():
     """Return current/last refresh job state."""
     return read_refresh_status()
 
+class FetchTeamRequest(BaseModel):
+    team_name: str
+    league: Optional[str] = None
+
+
 @app.post("/api/team/fetch")
-@app.get("/api/team/fetch")
-async def fetch_team_data(team_name: str):
-    """Fetch schedule and news for a newly added team."""
+async def fetch_team_data(body: FetchTeamRequest):
+    team_name = body.team_name
     try:
         detection, games, news = fetch_live_team_data(team_name)
         

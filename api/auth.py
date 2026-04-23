@@ -115,6 +115,9 @@ async def register_with_password(response: Response, request: Request, body: Aut
         result = supabase.auth.sign_up({
             "email": body.email,
             "password": body.password,
+            "options": {
+                "email_redirect_to": os.getenv("APP_URL", "https://sports-hub-sepia.vercel.app") + "/auth/callback"
+            }
         })
         session = result.session
         user = result.user
@@ -186,6 +189,31 @@ async def get_session(
         raise
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Session invalid: {str(e)}")
+
+
+@router.post("/callback", response_model=SessionResponse)
+async def auth_callback(
+    response: Response,
+    access_token: str = Header(...),
+    refresh_token: str = Header(...),
+):
+    """Exchange tokens from an email verification link for session cookies."""
+    if not SUPABASE_ENABLED:
+        raise HTTPException(status_code=503, detail="Auth not configured")
+
+    try:
+        supabase = get_supabase_client()
+        session = supabase.auth.set_session(access_token, refresh_token)
+        user = session.user
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid session")
+
+        _set_session_cookies(response, access_token, refresh_token)
+        return SessionResponse(user_id=user.id, email=user.email)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Auth failed: {str(e)}")
 
 
 @router.post("/logout")

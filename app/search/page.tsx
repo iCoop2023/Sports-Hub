@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import type { TeamSummary } from '@/lib/types'
 import { teamPath, leagueColor } from '@/lib/utils'
@@ -8,12 +9,25 @@ import LeagueBadge from '@/components/LeagueBadge'
 import TeamLogo from '@/components/TeamLogo'
 
 export default function ManagePage() {
+  return (
+    <Suspense>
+      <ManagePageContent />
+    </Suspense>
+  )
+}
+
+function ManagePageContent() {
+  const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
   const [allTeams, setAllTeams] = useState<TeamSummary[]>([])
   const [myTeams, setMyTeams] = useState<TeamSummary[]>([])
   const [adding, setAdding] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
-  const [expandedLeagues, setExpandedLeagues] = useState<Set<string>>(new Set())
+  const [authError, setAuthError] = useState(false)
+  const [expandedLeagues, setExpandedLeagues] = useState<Set<string>>(() => {
+    const league = searchParams.get('league')
+    return league ? new Set([league]) : new Set()
+  })
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -77,6 +91,10 @@ export default function ManagePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teams: updated }),
       })
+      if (res.status === 401) {
+        setAuthError(true)
+        return
+      }
       if (res.ok) {
         setMyTeams(updated)
         fetch('/api/team/fetch', {
@@ -140,6 +158,22 @@ export default function ManagePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-8">
+        {authError && (
+          <div
+            className="rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+            style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)' }}
+          >
+            <p className="text-blue-300 text-sm">Sign in to save teams to your dashboard.</p>
+            <Link
+              href="/login"
+              className="shrink-0 text-xs font-bold text-white px-3 py-1.5 rounded-full transition-opacity hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
+
         {loading && (
           <div className="flex justify-center py-16">
             <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
