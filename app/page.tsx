@@ -182,22 +182,31 @@ function Dashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [settingsRes, dashRes] = await Promise.all([
-        fetch('/api/settings', { cache: 'no-store' }),
-        fetch('/api/dashboard', { cache: 'no-store' }),
-      ])
+      const settingsRes = await fetch('/api/settings', { cache: 'no-store' })
       const settings = settingsRes.ok ? await settingsRes.json() : {}
-      const dash = dashRes.ok ? await dashRes.json() : {}
-
       const picked: TeamSummary[] = settings.teams ?? []
-      const allData: Team[] = dash.teams ?? []
-
-      const map: Record<string, Team> = {}
-      for (const t of allData) map[t.name] = t
 
       setMyTeams(picked)
-      setTeamData(map)
-      setLive(hasLiveGames(picked, map))
+
+      if (picked.length > 0) {
+        const results = await Promise.allSettled(
+          picked.map((t) =>
+            fetch(`/api/team/${encodeURIComponent(t.name)}`, { cache: 'no-store' })
+              .then((r) => (r.ok ? r.json() : null))
+          )
+        )
+
+        const map: Record<string, Team> = {}
+        for (const result of results) {
+          if (result.status === 'fulfilled' && result.value) {
+            const team: Team = result.value
+            map[team.name] = team
+          }
+        }
+
+        setTeamData(map)
+        setLive(hasLiveGames(picked, map))
+      }
     } catch {
       // retain stale state
     } finally {
