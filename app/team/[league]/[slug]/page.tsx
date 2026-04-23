@@ -9,6 +9,7 @@ import {
   calcRecord,
   recordStr,
   leagueColor,
+  teamColor,
   isLive,
   isCompleted,
 } from '@/lib/utils'
@@ -74,7 +75,7 @@ export default function TeamPage() {
   const sortedGames = uniqueGames.sort((a, b) => a.date.localeCompare(b.date))
 
   const rec = calcRecord([...team.recent_games ?? [], ...team.games ?? []])
-  const color = leagueColor(team.league)
+  const color = teamColor(team.abbrev, team.league, leagueColor(team.league))
   const liveGame = uniqueGames.find((g) => isLive(g.status))
 
   return (
@@ -88,7 +89,7 @@ export default function TeamPage() {
       >
         <div className="max-w-4xl mx-auto px-4 pt-6 pb-8">
           <div className="flex items-start gap-4">
-            <TeamLogo abbrev={team.abbrev} league={team.league} size={72} />
+            <TeamLogo abbrev={team.abbrev} league={team.league} name={team.name} size={72} />
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-black text-white">{team.name}</h1>

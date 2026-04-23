@@ -321,7 +321,7 @@ function TeamRow({
       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
     >
       <Link href={teamPath(team)} className="flex items-center gap-3 flex-1 min-w-0 group">
-        <TeamLogo abbrev={team.abbrev} league={team.league} size={36} />
+        <TeamLogo abbrev={team.abbrev} league={team.league} name={team.name} size={36} />
         <div className="min-w-0">
           <p className="text-white text-sm font-semibold truncate group-hover:text-blue-400 transition-colors">
             {team.name}

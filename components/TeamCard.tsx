@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Team, Game } from '@/lib/types'
-import { teamPath, formatGameDate, calcRecord, recordStr, leagueColor, isLive } from '@/lib/utils'
+import { teamPath, formatGameDate, calcRecord, recordStr, leagueColor, teamColor, isLive } from '@/lib/utils'
 import TeamLogo from './TeamLogo'
 import LeagueBadge from './LeagueBadge'
 
@@ -56,7 +56,7 @@ function GameRow({ game, isNext }: { game: Game; isNext?: boolean }) {
 
 export default function TeamCard({ team }: Props) {
   const path = teamPath(team)
-  const color = leagueColor(team.league)
+  const color = teamColor(team.abbrev, team.league, leagueColor(team.league))
 
   const allGames = [...(team.recent_games ?? []), ...(team.games ?? [])]
   const recentGames = team.recent_games ?? []
@@ -80,7 +80,7 @@ export default function TeamCard({ team }: Props) {
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <TeamLogo abbrev={team.abbrev} league={team.league} size={48} />
+          <TeamLogo abbrev={team.abbrev} league={team.league} name={team.name} size={48} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-white font-bold text-[15px] leading-tight truncate">{team.name}</span>

@@ -1,4 +1,5 @@
 import type { Game, TeamRecord } from './types'
+export { teamColor } from './logos'
 
 export function teamSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
