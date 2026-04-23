@@ -8,6 +8,15 @@ import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+# Some sports APIs (notably the NHL) block requests without a browser User-Agent.
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    )
+}
+
 # ---------------------------------------------------------------------------
 # Official MLB Stats API team IDs (free, no auth, very reliable)
 # ---------------------------------------------------------------------------
@@ -54,6 +63,7 @@ ESPN_NFL_IDS = {
     "San Francisco 49ers": 25, "Seattle Seahawks": 26, "Tampa Bay Buccaneers": 27,
     "Tennessee Titans": 10, "Washington Commanders": 28,
 }
+
 
 # League API patterns
 LEAGUE_APIS = {
@@ -372,6 +382,7 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
     try:
         resp = requests.get(
             f"https://api-web.nhle.com/v1/club-schedule-season/{abbrev}/now",
+            headers=_BROWSER_HEADERS,
             timeout=10)
         resp.raise_for_status()
         data = resp.json()
@@ -396,7 +407,9 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
         date_str = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
         try:
             resp = requests.get(
-                f"https://api-web.nhle.com/v1/scoreboard/{date_str}", timeout=4)
+                f"https://api-web.nhle.com/v1/scoreboard/{date_str}",
+                headers=_BROWSER_HEADERS,
+                timeout=4)
             resp.raise_for_status()
             data = resp.json()
             for day in data.get("gamesByDate", []):
@@ -434,7 +447,31 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
                     }
         except Exception:
             continue
-    return list(games.values())
+
+    if games:
+        return list(games.values())
+
+    # Both NHL API endpoints failed — fall back to ESPN's NHL schedule
+    print(f"NHL API unavailable for {abbrev}, trying ESPN fallback")
+    try:
+        r = requests.get(
+            "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams",
+            timeout=10)
+        r.raise_for_status()
+        espn_id = None
+        for t in (r.json().get("sports", [{}])[0]
+                  .get("leagues", [{}])[0].get("teams", [])):
+            if t.get("team", {}).get("abbreviation", "").upper() == abbrev.upper():
+                espn_id = t["team"]["id"]
+                break
+        if espn_id:
+            team_name = nhl_abbrev_to_name.get(abbrev, abbrev)
+            return _fetch_espn_by_id(team_name, espn_id, "hockey/nhl", "NHL", abbrev)
+    except Exception as e:
+        print(f"NHL ESPN fallback failed for {abbrev}: {e}")
+
+    return []
+
 
 def fetch_mlb_schedule(team_name: str) -> List[Dict]:
     """Fetch MLB schedule from the official MLB Stats API (free, no auth)."""
@@ -573,27 +610,6 @@ def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
     if not numeric_id:
         print(f"ESPN: no numeric ID found for {team_name} ({league})")
         return []
-    sport_path, id_map = entry
-
-    numeric_id = id_map.get(team_name)
-    if not numeric_id:
-        # Last-resort live lookup
-        try:
-            r = requests.get(
-                f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/teams",
-                timeout=10)
-            r.raise_for_status()
-            for t in (r.json().get("sports", [{}])[0]
-                      .get("leagues", [{}])[0].get("teams", [])):
-                if t.get("team", {}).get("abbreviation", "").upper() == abbrev.upper():
-                    numeric_id = t["team"]["id"]
-                    break
-        except Exception as e:
-            print(f"ESPN ID lookup failed for {team_name}: {e}")
-
-    if not numeric_id:
-        print(f"ESPN: no numeric ID found for {team_name} ({league})")
-        return []
 
     return _fetch_espn_by_id(team_name, numeric_id, sport_path, league, abbrev)
 
@@ -694,8 +710,9 @@ def fetch_hockeytech_schedule(team_name: str, team_id: str) -> List[Dict]:
 
 
 def get_result(game: Dict) -> str:
-    """Determine W/L/T from NHL game."""
-    if game.get("gameState") in ["OFF", "FINAL"]:
+    """Determine W/L/T/LIVE/SCHEDULED from NHL game."""
+    state = game.get("gameState", "")
+    if state in ("OFF", "FINAL"):
         ts = game.get("teamScore", 0)
         os = game.get("opponentScore", 0)
         if ts > os:
@@ -704,6 +721,8 @@ def get_result(game: Dict) -> str:
             return "L"
         else:
             return "T"
+    if state == "LIVE":
+        return "LIVE"
     return "SCHEDULED"
 
 

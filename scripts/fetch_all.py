@@ -24,6 +24,14 @@ TEAMS_CONFIG = Path(__file__).parent.parent / "config" / "teams.json"
 
 # API Bases
 NHL_API = "https://api-web.nhle.com/v1"
+
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    )
+}
 ESPN_API = "https://site.api.espn.com/apis/site/v2/sports"
 
 NHL_ABBREV_TO_NAME = {
@@ -67,7 +75,7 @@ def fetch_nhl_team(abbrev, team_name):
     for offset in range(-7, 8):
         date = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
         try:
-            response = requests.get(f"{NHL_API}/scoreboard/{date}", timeout=10)
+            response = requests.get(f"{NHL_API}/scoreboard/{date}", headers=_BROWSER_HEADERS, timeout=10)
             response.raise_for_status()
             data = response.json()
             
