@@ -7,16 +7,16 @@ import { espnLogoUrl, teamColor } from '@/lib/logos'
 interface Props {
   abbrev: string
   league: string
-  name?: string   // used to resolve soccer team IDs
+  name?: string   // kept for API compatibility, no longer used internally
   size?: number
 }
 
-export default function TeamLogo({ abbrev, league, name, size = 48 }: Props) {
+export default function TeamLogo({ abbrev, league, size = 48 }: Props) {
   const [imgFailed, setImgFailed] = useState(false)
   const fallbackColor = leagueColor(league)
   const color = teamColor(abbrev, league, fallbackColor)
   const letters = (abbrev ?? '?').slice(0, 3).toUpperCase()
-  const logoUrl = espnLogoUrl(abbrev, league, name)
+  const logoUrl = espnLogoUrl(abbrev, league)
 
   if (logoUrl && !imgFailed) {
     return (
