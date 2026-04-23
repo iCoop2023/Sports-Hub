@@ -343,15 +343,19 @@ def fetch_team_schedule(team_name: str) -> Optional[List[Dict]]:
         return []
     elif league == "MLB":
         return fetch_mlb_schedule(team_name)
+    elif league == "NHL":
+        # Try ESPN first (more reliable from cloud servers); fall back to NHLe API
+        espn_games = fetch_espn_schedule(team_name, abbrev, league)
+        if espn_games:
+            return espn_games
+        return fetch_nhl_schedule(abbrev)
     elif config["schedule"] == "espn":
         return fetch_espn_schedule(team_name, abbrev, league)
     elif config["schedule"] == "espn_soccer":
         return fetch_espn_soccer_schedule(team_name, abbrev, config.get("espn_league", ""))
     elif config["schedule"] == "hockeytech":
         return fetch_hockeytech_schedule(team_name, abbrev)
-    elif league == "NHL":
-        return fetch_nhl_schedule(abbrev)
-    
+
     return []
 
 
@@ -448,29 +452,7 @@ def fetch_nhl_schedule(abbrev: str) -> List[Dict]:
         except Exception:
             continue
 
-    if games:
-        return list(games.values())
-
-    # Both NHL API endpoints failed — fall back to ESPN's NHL schedule
-    print(f"NHL API unavailable for {abbrev}, trying ESPN fallback")
-    try:
-        r = requests.get(
-            "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams",
-            timeout=10)
-        r.raise_for_status()
-        espn_id = None
-        for t in (r.json().get("sports", [{}])[0]
-                  .get("leagues", [{}])[0].get("teams", [])):
-            if t.get("team", {}).get("abbreviation", "").upper() == abbrev.upper():
-                espn_id = t["team"]["id"]
-                break
-        if espn_id:
-            team_name = nhl_abbrev_to_name.get(abbrev, abbrev)
-            return _fetch_espn_by_id(team_name, espn_id, "hockey/nhl", "NHL", abbrev)
-    except Exception as e:
-        print(f"NHL ESPN fallback failed for {abbrev}: {e}")
-
-    return []
+    return list(games.values())
 
 
 def fetch_mlb_schedule(team_name: str) -> List[Dict]:
@@ -585,6 +567,7 @@ def fetch_espn_schedule(team_name: str, abbrev: str, league: str) -> List[Dict]:
         "NBA": ("basketball/nba", ESPN_NBA_IDS),
         "NFL": ("football/nfl",   ESPN_NFL_IDS),
         "CFL": ("football/cfl",   {}),
+        "NHL": ("hockey/nhl",     {}),
     }
     entry = sport_map.get(league)
     if not entry:
